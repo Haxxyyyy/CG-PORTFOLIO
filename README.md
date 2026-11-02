@@ -1,6 +1,6 @@
 # Chinmay Goud — Bansuri Portfolio
 
-A React + Vite starter for a cinematic musician portfolio and booking inquiry website.
+A standalone HTML, CSS, and JavaScript portfolio for bansuri artist Chinmay Goud. The active site combines a forest-green and bamboo-gold palette, restrained botanical linework, and a scroll-driven particle bansuri.
 
 ## Run locally
 
@@ -8,6 +8,14 @@ A React + Vite starter for a cinematic musician portfolio and booking inquiry we
 npm install
 npm run dev
 ```
+
+## Standalone HTML preview
+
+You can open `plain-html/index.html` directly in a browser. The hero bansuri is made from gold, ivory, and sage particles that scatter across the scene as you scroll. The lower instrument illustration has no orbit rings. The repository root redirects to the standalone site, and `dist/index.html` is the built preview for direct opening from disk.
+
+## Build and preview
+
+Run `npm run build` to copy the standalone site into `dist/`, then use `npm run preview` to serve that build.
 
 ## Project notes
 
