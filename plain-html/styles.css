@@ -589,3 +589,48 @@ body, .site-shell, .footer { background-color: var(--wine-deep); }
 @media (prefers-reduced-motion: reduce) {
   .hero-botanical { animation: none; }
 }
+
+/* Wind swept peacock feather loading interlude */
+.loading-screen {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(26px, env(safe-area-inset-top)) 24px max(26px, env(safe-area-inset-bottom));
+  color: #f2ecdf;
+  background: radial-gradient(ellipse at 50% 42%, #1d392e 0%, #102219 48%, #07120d 100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .85s cubic-bezier(.2,.7,.2,1), visibility 0s linear .85s;
+}
+.loading-screen.is-active { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
+.loading-screen.is-leaving { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .9s cubic-bezier(.2,.7,.2,1), visibility 0s linear .9s; }
+.loading-feathers, .loading-vignette { position: absolute; inset: 0; width: 100%; height: 100%; }
+.loading-feathers { opacity: .94; }
+.loading-vignette { background: radial-gradient(ellipse at 50% 48%, transparent 20%, rgba(3, 10, 7, .26) 75%, rgba(3, 9, 6, .66)); pointer-events: none; }
+.loading-content { position: relative; z-index: 2; width: min(430px, 88vw); display: flex; flex-direction: column; align-items: center; text-align: center; text-shadow: 0 3px 28px rgba(2, 9, 6, .62); }
+.loading-kicker, .loading-caption { display: flex; align-items: center; gap: 10px; color: #d7d4b1; font: 9px var(--mono); letter-spacing: .2em; }
+.loading-kicker i { width: 24px; height: 1px; background: linear-gradient(90deg, transparent, #d1bd86); }
+.loading-content p { margin: 23px 0 29px; color: #f1eddf; font: italic 400 clamp(37px, 5vw, 59px)/1.02 var(--serif); letter-spacing: -.025em; }
+.loading-progress { width: min(190px, 54vw); height: 1px; background: rgba(221, 218, 185, .25); }
+.loading-progress i { display: block; width: var(--loading-progress, 8%); height: 1px; background: linear-gradient(90deg, #728f76, #e5d6ac); box-shadow: 0 0 12px rgba(209, 193, 137, .58); transition: width .15s linear; }
+.loading-caption { width: min(190px, 54vw); justify-content: space-between; margin-top: 12px; color: #aeb9a9; font-size: 7px; letter-spacing: .16em; }
+.loading-caption b { color: #d6ca9b; font-weight: 400; }
+.loader-skip { position: absolute; right: max(28px, env(safe-area-inset-right)); bottom: max(28px, env(safe-area-inset-bottom)); min-height: 44px; padding: 10px 4px 10px 14px; border: 0; color: #c4c8b5; background: transparent; font: 8px var(--mono); letter-spacing: .16em; cursor: pointer; transition: color .3s ease; }
+.loader-skip span { padding-left: 8px; color: #e5d6ac; }
+.loader-skip:hover { color: #f2ecdf; }
+.loader-skip:focus-visible { outline: 2px solid #e5d6ac; outline-offset: 3px; }
+
+@media (max-width: 620px) {
+  .loading-content { width: 88vw; }
+  .loading-kicker { font-size: 8px; }
+  .loading-content p { margin: 20px 0 25px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen, .loading-screen.is-active, .loading-screen.is-leaving { transition: none; }
+  .loading-progress i { transition: none; }
+}

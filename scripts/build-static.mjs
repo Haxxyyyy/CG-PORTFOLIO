@@ -7,7 +7,7 @@ const sourceDirectory = resolve(projectDirectory, 'plain-html');
 const outputDirectory = resolve(projectDirectory, 'dist');
 
 await mkdir(outputDirectory, { recursive: true });
-await Promise.all(['index.html', 'styles.css', 'sound-motion.js'].map((file) =>
+await Promise.all(['index.html', 'styles.css', 'loader.js', 'sound-motion.js'].map((file) =>
   copyFile(resolve(sourceDirectory, file), resolve(outputDirectory, file)),
 ));
 
