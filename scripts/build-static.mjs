@@ -8,9 +8,14 @@ const sourceDirectory = resolve(projectDirectory, 'plain-html');
 const outputDirectory = resolve(projectDirectory, 'dist');
 
 await mkdir(outputDirectory, { recursive: true });
+await mkdir(resolve(outputDirectory, 'assets'), { recursive: true });
 await Promise.all(['styles.css', 'sound-motion.js'].map((file) =>
   copyFile(resolve(sourceDirectory, file), resolve(outputDirectory, file)),
 ));
+await copyFile(
+  resolve(sourceDirectory, 'assets', 'peacock-feather.png'),
+  resolve(outputDirectory, 'assets', 'peacock-feather.png'),
+);
 
 const sourceHtml = await readFile(resolve(sourceDirectory, 'index.html'), 'utf8');
 const moduleScript = '<script type="module" src="./loader.js"></script>';

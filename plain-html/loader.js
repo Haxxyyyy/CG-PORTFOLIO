@@ -25,6 +25,9 @@ if (!screen || !canvas) {
   let windLines = [];
   let featherGeometry;
   let vaneTexture;
+  let sceneReady = false;
+  let pageReady = document.readyState === 'complete';
+  let finishScheduled = false;
 
   screen.classList.add('is-active');
   siteShell?.setAttribute('inert', '');
@@ -34,108 +37,22 @@ if (!screen || !canvas) {
     return value - Math.floor(value);
   };
 
-  function makeVaneTexture() {
-    const textureCanvas = document.createElement('canvas');
-    textureCanvas.width = 512;
-    textureCanvas.height = 1024;
-    const context = textureCanvas.getContext('2d');
-    const base = context.createLinearGradient(256, 1024, 256, 0);
-    base.addColorStop(0, '#b4a66e');
-    base.addColorStop(0.18, '#647d53');
-    base.addColorStop(0.40, '#206d5b');
-    base.addColorStop(0.67, '#155b58');
-    base.addColorStop(0.86, '#173c55');
-    base.addColorStop(1, '#9b9462');
-    context.fillStyle = base;
-    context.fillRect(0, 0, 512, 1024);
-
-    const sheen = context.createLinearGradient(0, 0, 512, 0);
-    sheen.addColorStop(0, 'rgba(225, 211, 158, .31)');
-    sheen.addColorStop(0.32, 'rgba(194, 218, 174, .04)');
-    sheen.addColorStop(0.56, 'rgba(63, 190, 170, .22)');
-    sheen.addColorStop(1, 'rgba(9, 36, 43, .3)');
-    context.fillStyle = sheen;
-    context.fillRect(0, 0, 512, 1024);
-
-    // Fine paired barbs give the vane a feathered surface instead of a flat decal.
-    for (let y = 92; y < 990; y += 9) {
-      const progressAlong = y / 1024;
-      const spread = 235 * Math.sin(Math.PI * (0.08 + progressAlong * 0.87));
-      const lineAlpha = 0.075 + Math.sin(y * 0.031) * 0.025;
-      context.strokeStyle = `rgba(227, 218, 172, ${lineAlpha})`;
-      context.lineWidth = y % 27 === 0 ? 1.1 : 0.65;
-      context.beginPath();
-      context.moveTo(256, y);
-      context.quadraticCurveTo(256 - spread * 0.48, y - 10, 256 - spread, y - 27);
-      context.moveTo(256, y);
-      context.quadraticCurveTo(256 + spread * 0.48, y - 10, 256 + spread, y - 27);
-      context.stroke();
-    }
-
-    // The peacock eye is built in layered pigments with a restrained gold rim.
-    context.save();
-    context.translate(256, 204);
-    context.scale(0.75, 1.12);
-    const eye = [
-      [104, 134, '#b49a5a'],
-      [90, 119, '#1e4b3d'],
-      [73, 99, '#347c68'],
-      [58, 81, '#4aa59a'],
-      [43, 63, '#235a83'],
-      [27, 43, '#182f49'],
-      [12, 22, '#091d25'],
-    ];
-    for (const [rx, ry, color] of eye) {
-      const gradient = context.createRadialGradient(-13, -23, 4, 0, 0, ry);
-      gradient.addColorStop(0, color === '#091d25' ? '#477c78' : color);
-      gradient.addColorStop(0.68, color);
-      gradient.addColorStop(1, color);
-      context.beginPath();
-      context.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-      context.fillStyle = gradient;
-      context.fill();
-    }
-    context.restore();
-
-    // A slight translucent glaze makes the colored vanes catch the scene lights.
-    const glaze = context.createLinearGradient(100, 0, 440, 1024);
-    glaze.addColorStop(0, 'rgba(239, 225, 167, .12)');
-    glaze.addColorStop(0.45, 'rgba(83, 203, 178, .035)');
-    glaze.addColorStop(1, 'rgba(12, 30, 38, .15)');
-    context.fillStyle = glaze;
-    context.fillRect(0, 0, 512, 1024);
-
-    const texture = new THREE.CanvasTexture(textureCanvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-    return texture;
-  }
-
   function makeFeatherGeometry() {
-    const rows = 42;
-    const columns = 16;
+    const rows = 38;
+    const columns = 28;
     const positions = [];
     const uvs = [];
     const indices = [];
-    const smoothstep = (a, b, value) => {
-      const t = THREE.MathUtils.clamp((value - a) / (b - a), 0, 1);
-      return t * t * (3 - 2 * t);
-    };
 
     for (let row = 0; row <= rows; row += 1) {
       const t = row / rows;
-      const baseSpread = 0.012 + 0.34 * Math.sin(Math.PI * Math.pow(t, 0.82)) ** 0.74;
-      const eyeBulge = 0.085 * Math.exp(-((t - 0.80) ** 2) / 0.012);
-      const tipTaper = 1 - smoothstep(0.91, 1, t) * 0.98;
-      const halfWidth = Math.max(0.008, (baseSpread + eyeBulge) * tipTaper);
-      const curveZ = 0.085 * Math.sin(t * Math.PI) - 0.035 * t;
 
       for (let column = 0; column <= columns; column += 1) {
         const u = column / columns;
-        const x = (u * 2 - 1) * halfWidth;
-        const camber = (1 - Math.abs(u * 2 - 1)) * 0.085;
-        positions.push(x, (t - 0.5) * 2.55, curveZ + camber);
-        uvs.push(u, 1 - t);
+        const camber = 0.13 * (1 - Math.abs(u * 2 - 1));
+        const sweep = 0.08 * Math.sin(t * Math.PI);
+        positions.push((u - 0.5) * 2.267, (t - 0.5) * 2.72, camber + sweep);
+        uvs.push(u, t);
       }
     }
 
@@ -156,41 +73,24 @@ if (!screen || !canvas) {
   }
 
   function makeFeather(seed, index, count) {
-    const scale = 0.48 + random(seed * 2.13) * 0.72;
+    const scale = 0.34 + random(seed * 2.13) * 0.55;
     const depth = random(seed * 8.9);
     const material = new THREE.MeshPhysicalMaterial({
       map: vaneTexture,
-      color: new THREE.Color().setHSL(0.39 + random(seed * 4.6) * 0.13, 0.38, 0.82),
-      roughness: 0.44 + random(seed * 7.1) * 0.18,
-      metalness: 0.12,
-      clearcoat: 0.58,
-      clearcoatRoughness: 0.32,
+      color: '#f3f5e9',
+      roughness: 0.5 + random(seed * 7.1) * 0.16,
+      metalness: 0.04,
+      clearcoat: 0.34,
+      clearcoatRoughness: 0.42,
       transparent: true,
-      opacity: 0.34 + random(seed * 5.8) * 0.4,
+      opacity: 0.3 + random(seed * 5.8) * 0.32,
+      alphaTest: 0.012,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
     const group = new THREE.Group();
     const vane = new THREE.Mesh(featherGeometry, material);
     group.add(vane);
-
-    const rachisCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, -1.3, 0.08),
-      new THREE.Vector3(0.025, -0.52, 0.15),
-      new THREE.Vector3(-0.008, 0.28, 0.18),
-      new THREE.Vector3(0, 1.27, 0.08),
-    ]);
-    const rachis = new THREE.Mesh(
-      new THREE.TubeGeometry(rachisCurve, 24, 0.009, 5, false),
-      new THREE.MeshStandardMaterial({
-        color: '#d7c68e',
-        metalness: 0.38,
-        roughness: 0.42,
-        transparent: true,
-        opacity: material.opacity * 0.72,
-      }),
-    );
-    group.add(rachis);
 
     group.scale.setScalar(scale);
     group.position.set(
@@ -201,7 +101,7 @@ if (!screen || !canvas) {
     group.rotation.set(
       (random(seed * 9.4) - 0.5) * 0.48,
       (random(seed * 10.3) - 0.5) * 0.92,
-      0.45 + (random(seed * 6.8) - 0.5) * 0.92,
+      -0.36 + (random(seed * 6.8) - 0.5) * 0.5,
     );
     group.userData = {
       seed,
@@ -210,6 +110,7 @@ if (!screen || !canvas) {
       startY: group.position.y,
       scale,
       depth,
+      tilt: group.rotation.z,
       index,
       count,
       speed: 0.18 + random(seed * 12.2) * 0.24,
@@ -264,7 +165,7 @@ if (!screen || !canvas) {
     renderer.setSize(width, height, false);
 
     if (featherItems.length) {
-      const count = window.innerWidth < 640 ? 15 : Math.min(30, Math.max(22, Math.round(width / 48)));
+      const count = window.innerWidth < 640 ? 11 : Math.min(18, Math.max(14, Math.round(width / 110)));
       while (featherItems.length > count) {
         const item = featherItems.pop();
         scene.remove(item);
@@ -309,16 +210,40 @@ if (!screen || !canvas) {
     scene.add(blueLight);
 
     resize();
-    vaneTexture = makeVaneTexture();
-    featherGeometry = makeFeatherGeometry();
-    const count = window.innerWidth < 640 ? 15 : Math.min(30, Math.max(22, Math.round(canvas.clientWidth / 48)));
-    featherItems = Array.from({ length: count }, (_, index) => makeFeather(index + 1, index, count));
-    makeWindLines();
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      './assets/peacock-feather.png',
+      (texture) => {
+        if (!active) {
+          texture.dispose();
+          return;
+        }
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        vaneTexture = texture;
+        featherGeometry = makeFeatherGeometry();
+        const count = window.innerWidth < 640 ? 11 : Math.min(18, Math.max(14, Math.round(canvas.clientWidth / 110)));
+        featherItems = Array.from({ length: count }, (_, index) => makeFeather(index + 1, index, count));
+        makeWindLines();
+        sceneReady = true;
+        if (reducedMotion.matches) renderer.render(scene, camera);
+        else if (!document.hidden && !frame) frame = requestAnimationFrame(render);
+        maybeFinishAfterLoad();
+      },
+      undefined,
+      (error) => {
+        console.warn('The supplied peacock feather image could not be loaded:', error);
+        sceneReady = true;
+        maybeFinishAfterLoad();
+      },
+    );
     return true;
   }
 
   function render(time) {
-    if (!active || !renderer) return;
+    if (!active || !renderer || !sceneReady) return;
     const seconds = (time - startedAt) / 1000;
 
     for (const feather of featherItems) {
@@ -336,7 +261,7 @@ if (!screen || !canvas) {
         + seconds * (0.025 + data.depth * 0.025);
       feather.rotation.x = Math.sin(phase * 0.72) * 0.42;
       feather.rotation.y = Math.sin(phase * 0.54 + data.index) * 0.8;
-      feather.rotation.z = 0.44 + Math.sin(phase * 0.66) * 0.22;
+      feather.rotation.z = data.tilt + Math.sin(phase * 0.66) * 0.22;
       feather.position.z = -2.4 + data.depth * 3.6 + Math.sin(phase * 0.37) * 0.22;
       feather.scale.setScalar(data.scale * depthFactor * (1 + Math.sin(phase * 0.8) * 0.018));
     }
@@ -381,9 +306,16 @@ if (!screen || !canvas) {
     window.setTimeout(() => screen.remove(), 950);
   }
 
-  function finishAfterLoad() {
+  function maybeFinishAfterLoad() {
+    if (!pageReady || !sceneReady || finishScheduled) return;
+    finishScheduled = true;
     const remaining = Math.max(0, minDuration - (performance.now() - startedAt));
     window.setTimeout(beginExit, remaining);
+  }
+
+  function handlePageLoad() {
+    pageReady = true;
+    maybeFinishAfterLoad();
   }
 
   function handleResize() {
@@ -395,7 +327,7 @@ if (!screen || !canvas) {
     if (document.hidden && frame) {
       cancelAnimationFrame(frame);
       frame = 0;
-    } else if (!document.hidden && active && !reducedMotion.matches && !frame) {
+    } else if (!document.hidden && active && sceneReady && !reducedMotion.matches && !frame) {
       frame = requestAnimationFrame(render);
     }
   }
@@ -404,11 +336,11 @@ if (!screen || !canvas) {
   if (initScene()) {
     window.addEventListener('resize', handleResize, { passive: true });
     document.addEventListener('visibilitychange', handleVisibility);
-    if (reducedMotion.matches) renderer.render(scene, camera);
-    else frame = requestAnimationFrame(render);
+  } else {
+    sceneReady = true;
   }
 
-  if (document.readyState === 'complete') finishAfterLoad();
-  else window.addEventListener('load', finishAfterLoad, { once: true });
+  if (pageReady) maybeFinishAfterLoad();
+  else window.addEventListener('load', handlePageLoad, { once: true });
   window.setTimeout(beginExit, 4200);
 }
