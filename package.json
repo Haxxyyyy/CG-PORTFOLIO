@@ -3,7 +3,20 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "dev": "vite plain-html", "build": "node scripts/build-static.mjs", "preview": "vite preview" },
-  "dependencies": { "@vitejs/plugin-react": "latest", "vite": "latest", "react": "latest", "react-dom": "latest", "lucide-react": "^0.468.0" },
-  "devDependencies": {}
+  "scripts": {
+    "dev": "vite plain-html",
+    "build": "node scripts/build-static.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "^0.468.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "three": "^0.187.0",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
 }
