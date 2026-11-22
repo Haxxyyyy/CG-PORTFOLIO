@@ -83,7 +83,7 @@ if (reduced) {
 
 /* Act rail */
 const rail = document.querySelector('.act-rail');
-const railSections = ['artist', 'listen', 'sight', 'instrument', 'live', 'book']
+const railSections = ['artist', 'listen', 'film', 'sight', 'instrument', 'live', 'book']
   .map((id) => document.getElementById(id))
   .filter(Boolean);
 
@@ -218,6 +218,16 @@ const volume = document.querySelector('.player-volume');
 volume?.addEventListener('input', () => {
   player.volume = Number(volume.value) / 100;
   player.muted = player.volume === 0;
+});
+
+/* Film reels: only one speaks at a time */
+const reels = [...document.querySelectorAll('.reel-frame video')];
+reels.forEach((video) => {
+  video.addEventListener('play', () => {
+    reels.forEach((other) => {
+      if (other !== video && !other.paused) other.pause();
+    });
+  });
 });
 
 /* Booking form */
