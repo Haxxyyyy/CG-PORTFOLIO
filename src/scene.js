@@ -37,6 +37,7 @@ const PALETTE = [
   'rgba(18, 32, 23, ',    // deep green
   'rgba(122, 86, 40, ',   // flute mid wood
   'rgba(217, 169, 95, ',  // flute light wood
+  'rgba(7, 12, 9, ',      // bore / finger-hole shadow
 ];
 const STEPS = 18;
 const SWATCH = PALETTE.map((base) =>
@@ -67,7 +68,7 @@ function makeGlyph(char, rand) {
       }
     }
   }
-  const target = 42;
+  const target = 54;
   if (points.length <= target) return points;
   const thinned = [];
   const stride = points.length / target;
@@ -85,7 +86,6 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
 
   const isOutro = mode === 'outro';
   const withFlute = !isOutro;
-  const withNotes = !isOutro;
 
   const state = {
     w: 1,
@@ -103,13 +103,11 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   let grass = [];
   let motes = [];
   let drifters = [];
-  let notes = [];
+  let bursts = [];
   let emitters = [];
   let glyphs = [];
   let small = false;
   let fluteIndex = 0;
-  let lastTime = 0;
-  let emitClock = 0;
   let glyphTimer = 0;
 
   const halton = (index, base) => {
@@ -159,28 +157,34 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     const minDim = Math.min(w, h);
     const spots = small
       ? [
-          [0.46, 0.12, 0.42],
-          [0.74, 0.27, 0.34],
-          [0.88, 0.1, 0.26],
+          [0.4, 0.12, 0.42],
+          [0.74, 0.28, 0.36],
+          [0.9, 0.08, 0.26],
+          [0.18, 0.32, 0.3],
         ]
       : [
-          [0.56, 0.2, 0.3],
-          [0.7, 0.1, 0.22],
-          [0.83, 0.27, 0.34],
-          [0.65, 0.43, 0.2],
-          [0.93, 0.14, 0.16],
+          [0.5, 0.17, 0.32],
+          [0.66, 0.08, 0.22],
+          [0.83, 0.26, 0.36],
+          [0.6, 0.45, 0.22],
+          [0.94, 0.12, 0.17],
+          [0.33, 0.32, 0.24],
+          [0.78, 0.5, 0.26],
         ];
 
     const targets = [];
     for (const [nx, ny, ns] of spots) {
       const glyph = glyphs[Math.floor(rand() * glyphs.length)];
       const scale = minDim * ns;
-      const copies = Math.max(1, Math.round(190 / glyph.length));
+      const tilt = (rand() - 0.5) * 0.7;
+      const cos = Math.cos(tilt);
+      const sin = Math.sin(tilt);
+      const copies = Math.max(1, Math.round(320 / glyph.length));
       for (const [gx, gy] of glyph) {
         for (let copy = 0; copy < copies; copy += 1) {
           targets.push([
-            nx * w + gx * scale + (rand() - 0.5) * 4,
-            ny * h + gy * scale + (rand() - 0.5) * 4,
+            nx * w + (gx * cos - gy * sin) * scale + (rand() - 0.5) * 4,
+            ny * h + (gx * sin + gy * cos) * scale + (rand() - 0.5) * 4,
           ]);
         }
       }
@@ -213,8 +217,38 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       p.c1y = p.y + dy * 0.3 + py * bend;
       p.c2x = p.x + dx * 0.72 + px * bend * 0.45;
       p.c2y = p.y + dy * 0.72 + py * bend * 0.45;
-      p.md = 0.06 + (1 - p.ft) * 0.22 + rand() * 0.08;
-      p.mv = 0.36 + rand() * 0.16;
+      p.md = 0.3 + (1 - p.ft) * 0.3 + rand() * 0.12;
+      p.mv = 0.34 + rand() * 0.16;
+    }
+  }
+
+  // The scroll burst: notes lift off the finger holes as the flute falls apart.
+  function buildBursts(rand) {
+    if (!withFlute || !emitters.length || !glyphs.length) return;
+    const count = small ? 9 : 14;
+    bursts = [];
+    for (let index = 0; index < count; index += 1) {
+      const origin = emitters[Math.floor(rand() * emitters.length)];
+      const angle = -Math.PI / 2 + (rand() - 0.5) * 2.4;
+      const distance = (90 + Math.pow(rand(), 1.2) * state.w * (small ? 0.4 : 0.5)) * (0.6 + rand() * 0.6);
+      const micro = rand() < 0.28;
+      const roll = rand();
+      bursts.push({
+        glyph: glyphs[Math.floor(rand() * glyphs.length)],
+        ox: origin.x + (rand() - 0.5) * 24,
+        oy: origin.y + (rand() - 0.5) * 16,
+        dx: Math.cos(angle) * distance,
+        dy: Math.sin(angle) * distance - rand() * 90,
+        lift: 50 + rand() * 160,
+        delay: 0.26 + rand() * 0.34,
+        dur: 0.5 + rand() * 0.3,
+        scale: micro ? 16 + rand() * 12 : small ? 24 + rand() * 18 : 38 + rand() * 32,
+        rot: (rand() - 0.5) * 0.9,
+        spin: (rand() - 0.5) * 0.9,
+        ph: rand() * TAU,
+        c: roll < 0.62 ? 3 : roll < 0.86 ? 4 : 2,
+        dot: 1.8 + rand() * 1.1,
+      });
     }
   }
 
@@ -239,136 +273,177 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     grass = [];
     motes = [];
     drifters = [];
-    notes = [];
     emitters = [];
 
-    /* ---- Bough: one mossy limb crossing the stage ---- */
+    /* ---- Boughs: a high limb left to right, a second from the bottom-left ---- */
     if (!isOutro) {
     const spine = [
-      [-0.06 * w, 0.315 * h],
-      [0.3 * w, 0.395 * h],
-      [0.66 * w, 0.205 * h],
-      [1.06 * w, 0.255 * h],
+      [-0.08 * w, 0.15 * h],
+      [0.3 * w, 0.235 * h],
+      [0.64 * w, 0.1 * h],
+      [1.08 * w, 0.17 * h],
+    ];
+    const lowSpine = [
+      [-0.1 * w, 1.04 * h],
+      [0.14 * w, 0.9 * h],
+      [0.33 * w, 0.855 * h],
+      [0.58 * w, 0.95 * h],
     ];
 
-    const boughCount = small ? 1250 : 2300;
-    for (let index = 0; index < boughCount; index += 1) {
-      const t = Math.pow(rand(), 0.88);
-      const bx = cubic(spine[0][0], spine[1][0], spine[2][0], spine[3][0], t);
-      const by = cubic(spine[0][1], spine[1][1], spine[2][1], spine[3][1], t);
-      const tx = cubicTangent(spine[0][0], spine[1][0], spine[2][0], spine[3][0], t);
-      const ty = cubicTangent(spine[0][1], spine[1][1], spine[2][1], spine[3][1], t);
-      const len = Math.hypot(tx, ty) || 1;
-      const nx = -ty / len;
-      const ny = tx / len;
-      const thickness = lerp(small ? 20 : 27, 8, t) * (0.85 + rand() * 0.3);
-      const off = gauss(rand) * thickness;
-      const roll = rand();
-      const color = roll < 0.5 ? 0 : roll < 0.79 ? 1 : roll < 0.92 ? 2 : 3;
-      const [sx, sy] = scatter(rand, -Math.PI / 2, 1.5, 40, diag * 0.52);
+    const buildLimb = (points, count, baseThick, tipThick, mossClusters, twigs) => {
+      for (let index = 0; index < count; index += 1) {
+        const t = Math.pow(rand(), 0.88);
+        const bx = cubic(points[0][0], points[1][0], points[2][0], points[3][0], t);
+        const by = cubic(points[0][1], points[1][1], points[2][1], points[3][1], t);
+        const tx = cubicTangent(points[0][0], points[1][0], points[2][0], points[3][0], t);
+        const ty = cubicTangent(points[0][1], points[1][1], points[2][1], points[3][1], t);
+        const len = Math.hypot(tx, ty) || 1;
+        const nx = -ty / len;
+        const ny = tx / len;
+        const thickness = lerp(baseThick, tipThick, t) * (0.85 + rand() * 0.3);
+        const off = gauss(rand) * thickness;
+        const roll = rand();
+        const color = roll < 0.46 ? 0 : roll < 0.74 ? 1 : roll < 0.9 ? 2 : 3;
+        const [sx, sy] = scatter(rand, -Math.PI / 2, 1.5, 40, diag * 0.52);
 
-      push({
-        x: bx + nx * off,
-        y: by + ny * off,
-        sx,
-        sy,
-        d: 0.06 + t * 0.3 + rand() * 0.12,
-        a: 0.28 + rand() * 0.52,
-        c: color,
-        s: 0.7 + rand() * 1.7,
-        ph: rand() * TAU,
-        sp: 0.35 + rand() * 0.9,
-        wob: 0.5 + rand() * 1.1,
-      });
-    }
-
-    // Twigs rising off the limb, each capped with a leaf cluster.
-    const twigs = small ? 4 : 6;
-    for (let index = 0; index < twigs; index += 1) {
-      const t = 0.16 + (index / twigs) * 0.8 + rand() * 0.05;
-      const tx0 = cubic(spine[0][0], spine[1][0], spine[2][0], spine[3][0], t);
-      const ty0 = cubic(spine[0][1], spine[1][1], spine[2][1], spine[3][1], t);
-      const dir = index % 2 === 0 ? -1 : 1;
-      const length = (small ? 46 : 70) + rand() * (small ? 50 : 90);
-      const cx = tx0 + dir * length * 0.55;
-      const cy = ty0 - length * 0.62;
-      const ex = tx0 + dir * length;
-      const ey = ty0 - length * 1.05;
-
-      for (let step = 0; step < 110; step += 1) {
-        const u = rand();
-        const px = quadratic(tx0, cx, ex, u);
-        const py = quadratic(ty0, cy, ey, u);
-        const off = gauss(rand) * lerp(3.4, 1.1, u);
-        const [sx, sy] = scatter(rand, -Math.PI / 2, 1.4, 30, diag * 0.45);
         push({
-          x: px + off,
-          y: py + off * 0.6,
+          x: bx + nx * off,
+          y: by + ny * off,
           sx,
           sy,
-          d: 0.08 + rand() * 0.32,
-          a: 0.3 + rand() * 0.45,
-          c: rand() < 0.65 ? 0 : 1,
-          s: 0.6 + rand() * 1.2,
+          d: 0.06 + t * 0.3 + rand() * 0.12,
+          a: 0.3 + rand() * 0.54,
+          c: color,
+          s: 0.8 + rand() * 1.9,
           ph: rand() * TAU,
-          sp: 0.4 + rand() * 0.7,
-          wob: 0.4 + rand() * 0.8,
-        });
-      }
-
-      const leaves = small ? 26 : 38;
-      for (let step = 0; step < leaves; step += 1) {
-        const [sx, sy] = scatter(rand, -Math.PI / 2, 1.4, 30, diag * 0.4);
-        push({
-          x: ex + gauss(rand) * 20,
-          y: ey + gauss(rand) * 26,
-          sx,
-          sy,
-          d: 0.07 + rand() * 0.3,
-          a: 0.3 + rand() * 0.5,
-          c: rand() < 0.6 ? 1 : rand() < 0.85 ? 2 : 4,
-          s: 0.9 + rand() * 1.8,
-          ph: rand() * TAU,
-          sp: 0.35 + rand() * 0.6,
-          wob: 0.6 + rand() * 1,
-        });
-      }
-    }
-
-    // Overgrowth along the top of the limb.
-    const mossClusters = small ? 10 : 16;
-    for (let index = 0; index < mossClusters; index += 1) {
-      const t = 0.05 + rand() * 0.95;
-      const bx = cubic(spine[0][0], spine[1][0], spine[2][0], spine[3][0], t);
-      const by = cubic(spine[0][1], spine[1][1], spine[2][1], spine[3][1], t) - (small ? 10 : 16);
-      for (let step = 0; step < 26; step += 1) {
-        const [sx, sy] = scatter(rand, -Math.PI / 2, 1.2, 30, diag * 0.42);
-        push({
-          x: bx + gauss(rand) * (small ? 26 : 40),
-          y: by + gauss(rand) * 14,
-          sx,
-          sy,
-          d: 0.05 + rand() * 0.3,
-          a: 0.22 + rand() * 0.48,
-          c: rand() < 0.5 ? 1 : rand() < 0.85 ? 2 : 3,
-          s: 0.8 + rand() * 1.6,
-          ph: rand() * TAU,
-          sp: 0.5 + rand() * 0.9,
+          sp: 0.35 + rand() * 0.9,
           wob: 0.5 + rand() * 1.1,
         });
       }
-    }
+
+      // Twigs rising off the limb, each capped with a leaf cluster.
+      for (let index = 0; index < twigs; index += 1) {
+        const t = 0.16 + (index / Math.max(1, twigs)) * 0.8 + rand() * 0.05;
+        const tx0 = cubic(points[0][0], points[1][0], points[2][0], points[3][0], t);
+        const ty0 = cubic(points[0][1], points[1][1], points[2][1], points[3][1], t);
+        const dir = index % 2 === 0 ? -1 : 1;
+        const length = (small ? 46 : 74) + rand() * (small ? 50 : 100);
+        const cx = tx0 + dir * length * 0.55;
+        const cy = ty0 - length * 0.62;
+        const ex = tx0 + dir * length;
+        const ey = ty0 - length * 1.05;
+
+        for (let step = 0; step < 110; step += 1) {
+          const u = rand();
+          const px = quadratic(tx0, cx, ex, u);
+          const py = quadratic(ty0, cy, ey, u);
+          const off = gauss(rand) * lerp(3.4, 1.1, u);
+          const [sx, sy] = scatter(rand, -Math.PI / 2, 1.4, 30, diag * 0.45);
+          push({
+            x: px + off,
+            y: py + off * 0.6,
+            sx,
+            sy,
+            d: 0.08 + rand() * 0.32,
+            a: 0.3 + rand() * 0.45,
+            c: rand() < 0.65 ? 0 : 1,
+            s: 0.6 + rand() * 1.2,
+            ph: rand() * TAU,
+            sp: 0.4 + rand() * 0.7,
+            wob: 0.4 + rand() * 0.8,
+          });
+        }
+
+        const leaves = small ? 26 : 42;
+        for (let step = 0; step < leaves; step += 1) {
+          const [sx, sy] = scatter(rand, -Math.PI / 2, 1.4, 30, diag * 0.4);
+          push({
+            x: ex + gauss(rand) * 20,
+            y: ey + gauss(rand) * 26,
+            sx,
+            sy,
+            d: 0.07 + rand() * 0.3,
+            a: 0.3 + rand() * 0.5,
+            c: rand() < 0.6 ? 1 : rand() < 0.85 ? 2 : 4,
+            s: 0.9 + rand() * 1.8,
+            ph: rand() * TAU,
+            sp: 0.35 + rand() * 0.6,
+            wob: 0.6 + rand() * 1,
+          });
+        }
+      }
+
+      // Overgrowth along the top of the limb.
+      for (let index = 0; index < mossClusters; index += 1) {
+        const t = 0.05 + rand() * 0.95;
+        const bx = cubic(points[0][0], points[1][0], points[2][0], points[3][0], t);
+        const by = cubic(points[0][1], points[1][1], points[2][1], points[3][1], t) - (small ? 10 : 16);
+        for (let step = 0; step < 34; step += 1) {
+          const [sx, sy] = scatter(rand, -Math.PI / 2, 1.2, 30, diag * 0.42);
+          push({
+            x: bx + gauss(rand) * (small ? 26 : 42),
+            y: by + gauss(rand) * 15,
+            sx,
+            sy,
+            d: 0.05 + rand() * 0.3,
+            a: 0.24 + rand() * 0.5,
+            c: rand() < 0.5 ? 1 : rand() < 0.85 ? 2 : 3,
+            s: 0.8 + rand() * 1.7,
+            ph: rand() * TAU,
+            sp: 0.5 + rand() * 0.9,
+            wob: 0.5 + rand() * 1.1,
+          });
+        }
+      }
+
+      // Tufts of grass growing straight out of the bark.
+      const tufts = small ? 12 : 22;
+      for (let index = 0; index < tufts; index += 1) {
+        const t = 0.06 + rand() * 0.9;
+        const bx = cubic(points[0][0], points[1][0], points[2][0], points[3][0], t);
+        const by = cubic(points[0][1], points[1][1], points[2][1], points[3][1], t) - baseThick * 0.4;
+        const blades = 2 + Math.floor(rand() * 3);
+        for (let blade = 0; blade < blades; blade += 1) {
+          const height = (small ? 14 : 22) + rand() * (small ? 22 : 40);
+          const lean = (rand() - 0.5) * 30;
+          const phase = rand() * TAU;
+          const color = rand() < 0.5 ? 2 : rand() < 0.8 ? 1 : 4;
+          for (let step = 0; step < 7; step += 1) {
+            const u = step / 7;
+            const [sx, sy] = scatter(rand, -Math.PI / 2, 1.3, 26, diag * 0.36);
+            push({
+              x: bx + lean * u * u + (rand() - 0.5) * 2,
+              y: by - height * u,
+              sx,
+              sy,
+              d: 0.06 + rand() * 0.3,
+              a: 0.26 + rand() * 0.42,
+              c: color,
+              s: 0.7 + rand() * 1,
+              ph: phase + u,
+              sp: 0.6 + rand() * 0.7,
+              wob: 0.6 + u * 3.4,
+            });
+          }
+        }
+      }
+    };
+
+    buildLimb(spine, small ? 1900 : 3400, small ? 26 : 36, 11, small ? 16 : 26, small ? 5 : 8);
+    buildLimb(lowSpine, small ? 620 : 1050, small ? 18 : 24, 6, small ? 6 : 10, small ? 1 : 2);
 
     /* ---- Hanging vines ---- */
-    const vines = small ? 5 : 8;
+    const vines = small ? 7 : 12;
     for (let index = 0; index < vines; index += 1) {
       const t = 0.12 + rand() * 0.86;
       const bx = cubic(spine[0][0], spine[1][0], spine[2][0], spine[3][0], t);
       const by = cubic(spine[0][1], spine[1][1], spine[2][1], spine[3][1], t) + 6;
-      const length = (small ? 70 : 110) + rand() * (small ? 120 : 250);
-      const lean = (rand() - 0.5) * (small ? 40 : 70);
+      const right = t > 0.42;
+      const length =
+        (small ? 90 : 150) + rand() * (small ? 150 : 330) * (right ? 1 : 0.55);
+      const lean = (rand() - 0.5) * (small ? 40 : 80);
       const phase = rand() * TAU;
-      const steps = Math.max(8, Math.round(length / 7));
+      const steps = Math.max(10, Math.round(length / 6));
 
       for (let step = 0; step <= steps; step += 1) {
         const u = step / steps;
@@ -390,7 +465,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
           wob: 0.6 + u * 3.4,
         });
 
-        if (step % 3 === 0) {
+        if (step % 2 === 0) {
           for (let side = 0; side < 2; side += 1) {
             const dir = side === 0 ? -1 : 1;
             const [lsx, lsy] = scatter(rand, -Math.PI / 2, 1.6, 24, diag * 0.38);
@@ -413,17 +488,17 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     }
     }
 
-    /* ---- Bansuri: a tube of dust between bough and grass ---- */
+    /* ---- Bansuri: bore, embouchure, bindings, seven finger holes ---- */
     if (withFlute) {
       const x0 = small ? 0.02 * w : 0.42 * w;
-      const y0 = small ? 0.705 * h : 0.7 * h;
-      const x1 = small ? 0.97 * w : 0.985 * w;
-      const y1 = small ? 0.625 * h : 0.61 * h;
+      const y0 = small ? 0.72 * h : 0.715 * h;
+      const x1 = small ? 0.98 * w : 0.99 * w;
+      const y1 = small ? 0.62 * h : 0.60 * h;
       const length = Math.hypot(x1 - x0, y1 - y0);
       const angle = Math.atan2(y1 - y0, x1 - x0);
       const nx = -Math.sin(angle);
       const ny = Math.cos(angle);
-      const radius = clamp(length * 0.021, 7, 15);
+      const radius = clamp(length * 0.024, 9, 19);
 
       const pointAt = (t, off = 0) => ({
         x: x0 + (x1 - x0) * t + nx * off,
@@ -431,23 +506,34 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       });
 
       const radiusAt = (t) => {
-        const swell = 1 - Math.abs(t - 0.46) * 0.55;
-        const endTaper = t < 0.045 || t > 0.965 ? 0.72 : 1;
-        return radius * swell * endTaper;
+        const head = t < 0.06 ? lerp(0.78, 1, t / 0.06) : 1;
+        const foot = t > 0.94 ? lerp(1, 0.86, (t - 0.94) / 0.06) : 1;
+        const swell = 1 - Math.abs(t - 0.5) * 0.18;
+        return radius * swell * head * foot;
       };
 
-      const tubeCount = small ? 760 : 1250;
+      const grain = (t) => 0.72 + 0.28 * Math.sin(t * 34 + Math.sin(t * 9) * 2);
+
+      // Body: a filled cylinder, lit on the upper edge, shadowed underneath.
+      const tubeCount = small ? 1050 : 2000;
       for (let index = 0; index < tubeCount; index += 1) {
         const t = rand();
         const r = radiusAt(t);
-        const off = gauss(rand) * r;
-        const p = pointAt(t, off);
+        const off = gauss(rand) * r * 0.9;
+        const offN = off / r;
         const roll = rand();
-        const color = roll < 0.44 ? 0 : roll < 0.68 ? 6 : roll < 0.82 ? 7 : roll < 0.92 ? 3 : 4;
+        let color;
+        if (offN < -0.55) color = roll < 0.5 ? 7 : 3;
+        else if (offN > 0.68) color = 0;
+        else if (roll < 0.34) color = 6;
+        else if (roll < 0.62) color = 7;
+        else if (roll < 0.86) color = 0;
+        else color = 3;
+        const p = pointAt(t, off);
         pushFlute({
           x: p.x,
           y: p.y,
-          a: 0.3 + rand() * 0.58,
+          a: (0.34 + rand() * 0.5) * grain(t),
           c: color,
           s: 0.7 + rand() * 1.5,
           ph: rand() * TAU,
@@ -456,15 +542,16 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
         }, t);
       }
 
-      for (let index = 0; index < (small ? 80 : 130); index += 1) {
+      // Crisp lit silhouette on both edges.
+      for (let index = 0; index < (small ? 150 : 260); index += 1) {
         const t = rand();
         const side = rand() < 0.5 ? -1 : 1;
-        const p = pointAt(t, radiusAt(t) * side * 0.94);
+        const p = pointAt(t, radiusAt(t) * side * 0.96);
         pushFlute({
           x: p.x,
           y: p.y,
-          a: 0.4 + rand() * 0.5,
-          c: rand() < 0.6 ? 7 : 3,
+          a: 0.42 + rand() * 0.46,
+          c: rand() < 0.62 ? 7 : rand() < 0.8 ? 3 : 4,
           s: 0.8 + rand() * 1.3,
           ph: rand() * TAU,
           sp: 0.6 + rand() * 0.9,
@@ -472,51 +559,103 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
         }, t);
       }
 
-      // Finger holes: dark mouths ringed with a thin gold lip.
-      const holeT = [0.36, 0.43, 0.5, 0.57, 0.64, 0.71, 0.78];
-      for (const t of holeT) {
-        const center = pointAt(t, -radiusAt(t) * 0.45);
-        for (let index = 0; index < 16; index += 1) {
-          const a = (index / 16) * TAU;
+      // Bamboo nodes: thin dark collars across the barrel.
+      for (const t of [0.3, 0.55, 0.8]) {
+        const ring = pointAt(t, 0);
+        for (let index = 0; index < 26; index += 1) {
+          const off = lerp(-radiusAt(t) * 1.02, radiusAt(t) * 1.02, index / 25);
           pushFlute({
-            x: center.x + Math.cos(a) * radius * 0.5,
-            y: center.y + Math.sin(a) * radius * 0.42,
-            a: 0.5 + rand() * 0.4,
-            c: index % 3 === 0 ? 3 : 5,
-            s: 0.7 + rand() * 0.9,
+            x: ring.x + nx * off,
+            y: ring.y + ny * off,
+            a: 0.4 + rand() * 0.3,
+            c: index % 2 === 0 ? 0 : 6,
+            s: 1 + rand() * 0.8,
             ph: rand() * TAU,
-            sp: 0.8 + rand() * 1.2,
-            wob: 0.5 + rand() * 1.2,
+            sp: 0.9,
+            wob: 0.3,
           }, t);
         }
-        emitters.push({ x: center.x, y: center.y - 4 });
       }
 
-      // Mouth hole and binding bands.
-      const mouth = pointAt(0.14, -radius * 0.42);
-      for (let index = 0; index < 18; index += 1) {
-        const a = (index / 18) * TAU;
+      // Seven finger holes: dark well, gold lip, faint shadow above.
+      const holeT = [0.36, 0.43, 0.5, 0.57, 0.64, 0.71, 0.78];
+      for (const t of holeT) {
+        const center = pointAt(t, -radiusAt(t) * 0.3);
+        for (let index = 0; index < 12; index += 1) {
+          const a = rand() * TAU;
+          const rr = Math.sqrt(rand()) * radius * 0.3;
+          pushFlute({
+            x: center.x + Math.cos(a) * rr,
+            y: center.y + Math.sin(a) * rr * 0.8,
+            a: 0.7 + rand() * 0.3,
+            c: 8,
+            s: 1.1 + rand() * 0.9,
+            ph: rand() * TAU,
+            sp: 0.9,
+            wob: 0.3,
+          }, t);
+        }
+        for (let index = 0; index < 22; index += 1) {
+          const a = (index / 22) * TAU;
+          pushFlute({
+            x: center.x + Math.cos(a) * radius * 0.62,
+            y: center.y + Math.sin(a) * radius * 0.44,
+            a: 0.5 + rand() * 0.4,
+            c: index % 4 === 0 ? 7 : 3,
+            s: 1 + rand() * 0.9,
+            ph: rand() * TAU,
+            sp: 1,
+            wob: 0.4,
+          }, t);
+        }
+        emitters.push({ x: center.x, y: center.y });
+      }
+
+      // Embouchure: lip plate with a dark breath hole.
+      const mouth = pointAt(0.14, -radius * 0.16);
+      for (let index = 0; index < 16; index += 1) {
+        const a = rand() * TAU;
+        const rr = Math.sqrt(rand()) * radius * 0.34;
         pushFlute({
-          x: mouth.x + Math.cos(a) * radius * 0.55,
-          y: mouth.y + Math.sin(a) * radius * 0.4,
-          a: 0.55,
-          c: 5,
-          s: 0.9,
+          x: mouth.x + Math.cos(a) * rr,
+          y: mouth.y + Math.sin(a) * rr * 0.7,
+          a: 0.8,
+          c: 8,
+          s: 1.1 + rand() * 0.8,
           ph: rand() * TAU,
           sp: 0.9,
-          wob: 0.4,
+          wob: 0.3,
         }, 0.14);
       }
-      for (const t of [0.052, 0.088]) {
+      for (let index = 0; index < 26; index += 1) {
+        const a = (index / 26) * TAU;
+        pushFlute({
+          x: mouth.x + Math.cos(a) * radius * 1.02,
+          y: mouth.y + Math.sin(a) * radius * 0.56,
+          a: 0.55 + rand() * 0.35,
+          c: index % 3 === 0 ? 3 : 7,
+          s: 1 + rand() * 0.9,
+          ph: rand() * TAU,
+          sp: 1,
+          wob: 0.35,
+        }, 0.14);
+      }
+      emitters.push({ x: mouth.x, y: mouth.y });
+
+      // Thread bindings: three wraps at the head, three at the foot.
+      const bindings = [0.032, 0.05, 0.068, 0.932, 0.95, 0.968];
+      for (let ring = 0; ring < bindings.length; ring += 1) {
+        const t = bindings[ring];
         const band = pointAt(t, 0);
-        for (let index = 0; index < 22; index += 1) {
-          const off = lerp(-radiusAt(t), radiusAt(t), index / 21);
+        const thread = ring % 2 === 0 ? 0 : 3;
+        for (let index = 0; index < 30; index += 1) {
+          const off = lerp(-radiusAt(t) * 1.04, radiusAt(t) * 1.04, index / 29);
           pushFlute({
             x: band.x + nx * off,
             y: band.y + ny * off,
-            a: 0.55 + rand() * 0.3,
-            c: index % 2 === 0 ? 3 : 0,
-            s: 1.1,
+            a: 0.6 + rand() * 0.3,
+            c: index % 2 === 0 ? thread : 7,
+            s: 1.2,
             ph: rand() * TAU,
             sp: 1.1,
             wob: 0.3,
@@ -524,20 +663,58 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
         }
       }
 
+      // Ends: sealed node at the head, open bore at the foot.
+      for (const [t, open] of [[0.0, false], [1.0, true]]) {
+        const cap = pointAt(t, 0);
+        for (let index = 0; index < 24; index += 1) {
+          const off = lerp(-radiusAt(t), radiusAt(t), index / 23);
+          pushFlute({
+            x: cap.x + nx * off,
+            y: cap.y + ny * off,
+            a: 0.55 + rand() * 0.3,
+            c: index % 2 === 0 ? 6 : 0,
+            s: 1.1,
+            ph: rand() * TAU,
+            sp: 0.9,
+            wob: 0.3,
+          }, t);
+        }
+        if (open) {
+          for (let index = 0; index < 14; index += 1) {
+            const a = rand() * TAU;
+            const rr = Math.sqrt(rand()) * radius * 0.5;
+            pushFlute({
+              x: cap.x + Math.cos(a) * rr,
+              y: cap.y + Math.sin(a) * rr,
+              a: 0.85,
+              c: 8,
+              s: 1.1 + rand() * 0.8,
+              ph: rand() * TAU,
+              sp: 1,
+              wob: 0.2,
+            }, 1);
+          }
+        }
+      }
+
       if (!glyphs.length) buildGlyphs();
       buildMorphTargets(rand);
+      buildBursts(rand);
     }
 
-    /* ---- Grass bank ---- */
-    const bladeCount = small ? 64 : 108;
+    /* ---- Grass bank: a low back layer plus taller foreground blades ---- */
+    const bladeCount = isOutro
+      ? small ? 60 : 110
+      : small ? 220 : 420;
     for (let index = 0; index < bladeCount; index += 1) {
+      const back = rand() < 0.4;
       const x = (index / bladeCount) * w + (rand() - 0.5) * 26;
       const base = h * (0.955 + rand() * 0.045);
-      const height = h * (0.02 + rand() * 0.065) * (small ? 0.85 : 1);
+      const height = h * (0.03 + rand() * (isOutro ? 0.055 : 0.1)) * (small ? 0.85 : 1) * (back ? 0.55 : 1);
       const lean = (rand() - 0.5) * 52;
       const phase = rand() * TAU;
-      const steps = 10;
-      const color = rand() < 0.55 ? 5 : rand() < 0.85 ? 1 : 2;
+      const steps = back ? 7 : 14;
+      const color = back ? 5 : rand() < 0.15 ? 5 : rand() < 0.6 ? 1 : 2;
       for (let step = 0; step < steps; step += 1) {
         const u = step / steps;
         const [sx, sy] = scatter(rand, -Math.PI / 2, 1, 30, diag * 0.32);
@@ -547,9 +724,9 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
           sx,
           sy,
           d: 0.22 + rand() * 0.24,
-          a: 0.3 + rand() * 0.4,
+          a: back ? 0.32 + rand() * 0.35 : 0.55 + rand() * 0.4,
           c: color,
-          s: 0.8 + rand() * 1.1,
+          s: 1 + rand() * 1.7,
           ph: phase + u,
           sp: 0.6 + rand() * 0.8,
           wob: 0.8 + u * 3.2,
@@ -558,10 +735,10 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     }
 
     // Bank shadow under the blades.
-    const bank = ctx.createLinearGradient(0, h * 0.88, 0, h);
+    const bank = ctx.createLinearGradient(0, h * 0.86, 0, h);
     bank.addColorStop(0, 'rgba(6, 14, 10, 0)');
-    bank.addColorStop(0.55, 'rgba(6, 14, 10, 0.72)');
-    bank.addColorStop(1, '#050d0a');
+    bank.addColorStop(0.5, 'rgba(5, 12, 9, 0.82)');
+    bank.addColorStop(1, '#030806');
     state.bank = bank;
     state.radius = withFlute ? clamp(Math.hypot(w, h) * 0.012, 8, 15) : 12;
 
@@ -693,80 +870,26 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     ctx.restore();
   }
 
-  function spawnNote() {
-    if (!withNotes || !glyphs.length || !emitters.length) return;
-    if (notes.length > (small ? 9 : 15)) return;
-    const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
-    const hole = emitters[Math.floor(Math.random() * emitters.length)];
-    const scatterX = [];
-    const scatterY = [];
-    for (let index = 0; index < glyph.length; index += 1) {
-      const angle = Math.random() * TAU;
-      const distance = 10 + Math.random() * 34;
-      scatterX.push(Math.cos(angle) * distance);
-      scatterY.push(Math.sin(angle) * distance - 8);
-    }
-    const palette = Math.random();
-    notes.push({
-      glyph,
-      x: hole.x,
-      y: hole.y,
-      vx: 12 + Math.random() * 20,
-      vy: -(24 + Math.random() * 26),
-      scale: (small ? 15 : 18) + Math.random() * (small ? 8 : 11),
-      rot: (Math.random() - 0.5) * 0.4,
-      spin: (Math.random() - 0.5) * 0.7,
-      phase: Math.random() * TAU,
-      life: 0,
-      dur: 6 + Math.random() * 3,
-      dot: 1.3 + Math.random() * 0.9,
-      css: palette < 0.6 ? 'rgba(234, 202, 138, 0.9)' : palette < 0.86 ? 'rgba(242, 238, 225, 0.85)' : 'rgba(169, 188, 142, 0.85)',
-      scatterX,
-      scatterY,
-    });
-  }
-
-  function updateNotes(dt) {
-    if (!withNotes) return;
-    emitClock += dt;
-    if (emitClock > 0.52 && state.progress < 0.35) {
-      emitClock = 0;
-      spawnNote();
-    }
-    for (let index = notes.length - 1; index >= 0; index -= 1) {
-      const note = notes[index];
-      note.life += dt;
-      if (note.life > note.dur) {
-        notes.splice(index, 1);
-        continue;
-      }
-      note.x += (note.vx + Math.sin(note.life * 1.1 + note.phase) * 10) * dt;
-      note.y += note.vy * dt;
-      note.rot += note.spin * dt;
-    }
-  }
-
-  function drawNotes(progress) {
-    if (!notes.length) return;
+  // Scroll burst: each note flies up and out from a finger hole, fading fast.
+  function drawBursts(time, progress) {
+    if (!bursts.length) return;
     ctx.save();
-    for (const note of notes) {
-      const appear = smoothstep(clamp(note.life / 0.5, 0, 1));
-      const leave = smoothstep(clamp((note.life - (note.dur - 1.8)) / 1.8, 0, 1));
-      const scroll = smoothstep(clamp(progress * 1.6, 0, 1));
-      const alpha = appear * (1 - leave) * (1 - scroll);
-      if (alpha <= 0.02) continue;
-      const drift = leave * leave + scroll * scroll * 3;
-      const cos = Math.cos(note.rot);
-      const sin = Math.sin(note.rot);
-      const scale = note.scale;
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = note.css;
-      const ox = Math.sin(note.life * 0.7 + note.phase) * 6;
-      for (let index = 0; index < note.glyph.length; index += 1) {
-        const [gx, gy] = note.glyph[index];
-        const px = (gx * cos - gy * sin) * scale + note.scatterX[index] * drift + ox;
-        const py = (gx * sin + gy * cos) * scale + note.scatterY[index] * drift;
-        ctx.fillRect(note.x + px, note.y + py, note.dot, note.dot);
+    for (const b of bursts) {
+      const local = clamp((progress - b.delay) / b.dur, 0, 1);
+      if (local <= 0.001) continue;
+      const eased = 1 - Math.pow(1 - local, 3);
+      const pop = 1 + Math.sin(Math.min(1, local * 1.15) * Math.PI) * 0.22;
+      const x = b.ox + b.dx * eased + Math.sin(time * 0.6 + b.ph) * 7 * eased;
+      const y = b.oy + b.dy * eased - Math.sin(eased * Math.PI) * b.lift + Math.cos(time * 0.5 + b.ph) * 6 * eased;
+      const alpha = smoothstep(clamp(local / 0.14, 0, 1)) * (1 - smoothstep(clamp((local - 0.72) / 0.28, 0, 1))) * 0.95;
+      const step = Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)));
+      ctx.fillStyle = SWATCH[b.c][step];
+      const rot = b.rot + b.spin * eased * 2 + Math.sin(time * 0.4 + b.ph) * 0.07;
+      const cos = Math.cos(rot);
+      const sin = Math.sin(rot);
+      const scale = b.scale * pop * (0.6 + 0.4 * eased);
+      for (const [gx, gy] of b.glyph) {
+        ctx.fillRect(x + (gx * cos - gy * sin) * scale, y + (gx * sin + gy * cos) * scale, b.dot, b.dot);
       }
     }
     ctx.restore();
@@ -836,7 +959,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     drawField(time, progress);
     drawFluteField(time, progress);
     drawDrifters(time);
-    drawNotes(progress);
+    drawBursts(time, progress);
     drawGrass(time, progress);
 
     ctx.restore();
@@ -845,10 +968,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   function loop(now) {
     if (!state.running) return;
     const seconds = now / 1000;
-    const dt = lastTime ? Math.min(0.05, seconds - lastTime) : 0.016;
-    lastTime = seconds;
     state.time = seconds;
-    updateNotes(dt);
     draw(seconds);
     state.frame = requestAnimationFrame(loop);
   }
@@ -856,7 +976,6 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   function start() {
     if (reduced || state.running) return;
     state.running = true;
-    lastTime = 0;
     state.frame = requestAnimationFrame(loop);
   }
 
