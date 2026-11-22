@@ -1,13 +1,355 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="refresh" content="0; url=./dist/index.html" />
-    <meta name="theme-color" content="#09120d" />
-    <title>Chinmay Goud — Bansuri</title>
-  </head>
-  <body>
-    <p>Opening the portfolio… <a href="./dist/index.html">Open it here</a>.</p>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chinmay Goud — Bansuri</title>
+  <meta name="description" content="Chinmay Goud plays the bansuri — the wooden flute of North Indian classical music. Weddings, celebrations, clubs, and orchestras." />
+  <meta name="theme-color" content="#07110d" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&family=Mrs+Saint+Delafield&family=Noto+Serif+Devanagari:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="preload" as="image" href="/assets/portrait-study.webp" />
+  <noscript><style>#intro{display:none!important}.is-locked{overflow:auto!important}</style></noscript>
+</head>
+<body class="is-locked">
+  <div class="grain" aria-hidden="true"></div>
+
+  <section class="intro" id="intro" aria-label="Opening">
+    <canvas class="intro-canvas" aria-hidden="true"></canvas>
+    <div class="intro-frame">
+      <div class="intro-top">
+        <span class="seal seal--sm">चि</span>
+        <span class="label">CHINMAY GOUD · BANSURI</span>
+      </div>
+      <div class="intro-line">
+        <p class="label label--gold">GATHERING THE BREEZE</p>
+        <p class="intro-title">A breath through<br /><em>the forest.</em></p>
+      </div>
+      <div class="intro-foot">
+        <div class="intro-track"><i></i></div>
+        <div class="intro-meta">
+          <span class="label intro-status">Krishna's feather, on the wind</span>
+          <button class="intro-skip" type="button">Skip intro</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <a class="skip-link" href="#artist">Skip to content</a>
+
+  <div class="site" id="site">
+    <header class="masthead">
+      <a class="brand" href="#top" aria-label="Chinmay Goud — back to top">
+        <span class="seal">चि</span>
+        <span class="brand-copy">
+          <span class="brand-name">CHINMAY GOUD</span>
+          <span class="brand-sub">BANSURI</span>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#artist">The Artist</a>
+        <a href="#listen">Listen</a>
+        <a href="#live">Live</a>
+      </nav>
+      <a class="masthead-cta" href="#book">Book <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <aside class="act-rail" aria-hidden="true">
+      <span>01</span>
+      <span class="act-line"><i></i></span>
+      <span>06</span>
+    </aside>
+
+    <main id="main">
+      <section class="hero" id="top" aria-label="Introduction">
+        <div class="hero-stage">
+          <div class="hero-scrim" aria-hidden="true"></div>
+          <canvas class="hero-canvas" aria-hidden="true"></canvas>
+          <div class="hero-copy">
+            <p class="label label--gold">BANSURI · NORTH INDIAN CLASSICAL</p>
+            <h1 class="hero-title"><span>Breath,</span><em>made luminous.</em></h1>
+            <p class="hero-sub">Chinmay Goud carries the wooden flute from temple courtyards to wedding light and the orchestra's hush — a voice of air, wood, and patience.</p>
+            <p class="hero-meta label">CELEBRATIONS · CLUBS · ORCHESTRAS</p>
+          </div>
+          <div class="hero-scroll" aria-hidden="true">
+            <span class="label">Scroll — the note releases</span>
+            <i></i>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene manifesto" id="artist">
+        <span class="ghost-num" aria-hidden="true">I</span>
+        <div class="manifesto-inner">
+          <p class="label label--gold" data-reveal>I — THE ARTIST</p>
+          <h2 data-reveal>The instrument disappears.<br /><em>The breath remains.</em></h2>
+          <p class="lede" data-reveal>Chinmay Goud plays the bansuri — the wooden flute of North Indian classical music. Trained in raga and the long tone, he treats performance less as display than as listening: a room, a breath, and the silence between notes.</p>
+          <p data-reveal>On a wedding morning or under a club's low light, the sound is the same — warm, unforced, alive. The music does not arrive to impress. It arrives to stay.</p>
+          <div class="signature" data-reveal>
+            <span class="signature-script">Chinmay</span>
+            <span class="label">BANSURI ARTIST · CLASSICAL &amp; CONTEMPORARY</span>
+          </div>
+          <figure class="manifesto-figure" data-reveal>
+            <img src="/assets/portrait-study.webp" alt="Hands holding a bamboo flute above a score" loading="lazy" />
+            <figcaption class="label">HANDS · A STUDY IN BREATH</figcaption>
+          </figure>
+          <ul class="practice" data-reveal>
+            <li><span class="label">ROOT</span> Raga &amp; long tone</li>
+            <li><span class="label">STAGE</span> Weddings, clubs, orchestras</li>
+            <li><span class="label">STUDIO</span> Sessions, film, ambient</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="scene listen" id="listen">
+        <header class="scene-head">
+          <div>
+            <p class="label label--gold" data-reveal>II — LISTEN</p>
+            <h2 data-reveal>Three rooms,<br /><em>one breath.</em></h2>
+          </div>
+          <p class="scene-note" data-reveal>An alap on a bass bansuri, a Carnatic raga, and two unadorned field samples. Licensed recordings, played exactly as captured — press play when you are ready.</p>
+        </header>
+        <div class="listen-grid">
+          <div class="tracks">
+            <article class="track" data-track="0" data-src="/audio/bass-bansuri.ogg">
+              <button class="track-play" type="button" aria-label="Play: Alap, bass bansuri" aria-pressed="false"><span class="icon"></span></button>
+              <div class="track-info">
+                <h3>Alap — Bass Bansuri</h3>
+                <p class="label">PUBLIC DOMAIN · E BASS</p>
+              </div>
+              <div class="track-progress">
+                <input class="track-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek within Alap, bass bansuri" />
+              </div>
+              <span class="track-time label">0:00</span>
+            </article>
+            <article class="track" data-track="1" data-src="/audio/carnatic-flute.ogg">
+              <button class="track-play" type="button" aria-label="Play: Raga Mayamalavagowla" aria-pressed="false"><span class="icon"></span></button>
+              <div class="track-info">
+                <h3>Raga Mayamalavagowla</h3>
+                <p class="label">CARNATIC FLUTE · CC BY-SA</p>
+              </div>
+              <div class="track-progress">
+                <input class="track-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek within Raga Mayamalavagowla" />
+              </div>
+              <span class="track-time label">0:00</span>
+            </article>
+            <article class="track" data-track="2" data-src="/audio/bansuri-set.mp3">
+              <button class="track-play" type="button" aria-label="Play: Open tone, bansuri field sample" aria-pressed="false"><span class="icon"></span></button>
+              <div class="track-info">
+                <h3>Open Tone</h3>
+                <p class="label">FIELD SAMPLE · CC0</p>
+              </div>
+              <div class="track-progress">
+                <input class="track-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek within Open Tone" />
+              </div>
+              <span class="track-time label">0:00</span>
+            </article>
+            <article class="track" data-track="3" data-src="/audio/bansuri-grave.mp3">
+              <button class="track-play" type="button" aria-label="Play: Grave, low register" aria-pressed="false"><span class="icon"></span></button>
+              <div class="track-info">
+                <h3>Grave — Low Register</h3>
+                <p class="label">FIELD SAMPLE · CC0</p>
+              </div>
+              <div class="track-progress">
+                <input class="track-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek within Grave, low register" />
+              </div>
+              <span class="track-time label">0:00</span>
+            </article>
+            <div class="player-bar">
+              <span class="label">VOLUME</span>
+              <input class="player-volume" type="range" min="0" max="100" value="72" step="1" aria-label="Volume" />
+            </div>
+            <p class="label fine">BASS BANSURI · WIKIMEDIA COMMONS, PUBLIC DOMAIN · CARNATIC FLUTE · BANSURI.ARVIND, CC BY-SA 3.0 · FIELD SAMPLES · PHONOSUPF, CC0, FREESOUND.ORG</p>
+          </div>
+          <figure class="film" data-reveal>
+            <div class="film-frame">
+              <img src="/assets/woodland.webp" alt="Moss-covered trunks and filtered light in a quiet woodland" loading="lazy" />
+              <span class="film-tag label">WOODLAND · STUDY</span>
+            </div>
+            <figcaption class="label">Where the wood begins — sal and bamboo country.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="scene sight" id="sight">
+        <header class="scene-head scene-head--row">
+          <div>
+            <p class="label label--gold" data-reveal>III — SIGHTINGS</p>
+            <h2 data-reveal>Light <em>&amp;</em> timber.</h2>
+          </div>
+          <p class="scene-note" data-reveal>Photographs from the artist's world. Portraits and stage frames await approved material.</p>
+        </header>
+        <div class="plates">
+          <figure class="plate plate--tall" data-reveal>
+            <img src="/assets/field-notes.webp" alt="A musician playing a wooden flute in a stone archway" loading="lazy" />
+            <figcaption><span class="label">FIELD NOTES · RAJASTHAN</span><span class="label">01</span></figcaption>
+          </figure>
+          <figure class="plate plate--wide" data-reveal>
+            <img src="/assets/portrait-study.webp" alt="Hands holding a bamboo flute above a score" loading="lazy" />
+            <figcaption><span class="label">HANDS &amp; BAMBOO · STUDY</span><span class="label">02</span></figcaption>
+          </figure>
+          <figure class="plate plate--study" data-reveal>
+            <img src="/assets/player-study.webp" alt="A musician playing a wooden flute beneath trees" loading="lazy" />
+            <figcaption><span class="label">PORTRAIT · SANTINIKETAN</span><span class="label">03</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="scene instrument" id="instrument">
+        <span class="instrument-word" aria-hidden="true">बाँसुरी</span>
+        <p class="label label--gold" data-reveal>IV — THE INSTRUMENT</p>
+        <div class="instrument-grid">
+          <div class="specs">
+            <h2 data-reveal>Wood, air,<br /><em>and patience.</em></h2>
+            <p data-reveal>A single length of bamboo, drilled and tuned by hand. No keys, no reeds — only the shape of the breath and the place a fingertip rests. The bansuri is one of the oldest voices in Indian music, and one of the least forgiving.</p>
+            <dl data-reveal>
+              <div><dt class="label">KEY</dt><dd>A · Bass A</dd></div>
+              <div><dt class="label">MATERIAL</dt><dd>Assam bamboo</dd></div>
+              <div><dt class="label">RANGE</dt><dd>Two and a half octaves</dd></div>
+              <div><dt class="label">HOLES</dt><dd>Seven fingers · one breath</dd></div>
+              <div><dt class="label">VOICE</dt><dd>Raga · long tone</dd></div>
+            </dl>
+          </div>
+          <div class="path">
+            <h3 class="label label--gold" data-reveal>TRAINING &amp; PATH</h3>
+            <ol class="timeline">
+              <li data-reveal>
+                <span class="label">01</span>
+                <h4>First breath</h4>
+                <p>Foundations in Hindustani classical music — swara, breath control, and the discipline of the long tone.</p>
+              </li>
+              <li data-reveal>
+                <span class="label">02</span>
+                <h4>Raga</h4>
+                <p>Study of raga and its slow architecture: alap, jor, and the patient unfolding of a phrase.</p>
+              </li>
+              <li data-reveal>
+                <span class="label">03</span>
+                <h4>The stage</h4>
+                <p>A practice that moves between ceremony, nightlife, and the concert hall without losing its quiet.</p>
+              </li>
+            </ol>
+            <p class="label fine">TRAINING DATES &amp; CREDENTIALS · TO BE CONFIRMED WITH THE ARTIST</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene live" id="live">
+        <header class="scene-head">
+          <div>
+            <p class="label label--gold" data-reveal>V — LIVE</p>
+            <h2 data-reveal>Where the flute<br /><em>has travelled.</em></h2>
+          </div>
+          <p class="scene-note" data-reveal>Four rooms, four different silences. The programme is shaped around the occasion — never the other way around.</p>
+        </header>
+        <div class="venues">
+          <article data-reveal>
+            <span class="label">01</span>
+            <h3>Weddings</h3>
+            <p>Vidai, pheras, and the first hush of the mandap — the bansuri as a thread of tenderness through the day.</p>
+          </article>
+          <article data-reveal>
+            <span class="label">02</span>
+            <h3>Celebrations</h3>
+            <p>House warmings, anniversaries, and evenings that should not end quickly. Music that sits close to the table.</p>
+          </article>
+          <article data-reveal>
+            <span class="label">03</span>
+            <h3>Clubs</h3>
+            <p>Amplified and unhurried — classical phrases moving over a low pulse, until the room forgets the hour.</p>
+          </article>
+          <article data-reveal>
+            <span class="label">04</span>
+            <h3>Orchestras</h3>
+            <p>Bansuri in concert — raga and orchestra in conversation, the wooden voice against strings.</p>
+          </article>
+        </div>
+        <div class="live-foot">
+          <div class="formats">
+            <p class="label label--gold">FORMATS</p>
+            <ul class="chips">
+              <li>Solo bansuri</li>
+              <li>Bansuri &amp; tabla</li>
+              <li>With strings</li>
+              <li>Ambient sets</li>
+              <li>Studio sessions</li>
+            </ul>
+          </div>
+          <a class="btn" href="#book">Invite the flute <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="scene book" id="book">
+        <div class="book-grid">
+          <div class="book-intro">
+            <p class="label label--gold" data-reveal>VI — BOOK</p>
+            <h2 data-reveal>Bring the flute<br /><em>into the room.</em></h2>
+            <p data-reveal>Tell the artist about the occasion, the room, and the hour. Every performance begins with a conversation.</p>
+            <ul class="book-facts" data-reveal>
+              <li><span class="label">RESPONSE</span> Personal reply</li>
+              <li><span class="label">TRAVEL</span> By arrangement</li>
+              <li><span class="label">ENSEMBLE</span> Solo or with tabla</li>
+            </ul>
+          </div>
+          <form class="booking" novalidate data-reveal>
+            <div class="field-row">
+              <label class="field"><span>Name</span><input name="name" type="text" autocomplete="name" required /></label>
+              <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Phone / WhatsApp</span><input name="phone" type="tel" autocomplete="tel" /></label>
+              <label class="field"><span>City &amp; venue</span><input name="venue" type="text" autocomplete="off" /></label>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>Occasion</span>
+                <select name="occasion">
+                  <option>Wedding</option>
+                  <option>Celebration</option>
+                  <option>Club / Night</option>
+                  <option>Orchestra</option>
+                  <option>Studio / Film</option>
+                  <option>Other</option>
+                </select>
+              </label>
+              <label class="field"><span>Event date</span><input name="date" type="date" /></label>
+            </div>
+            <label class="field"><span>Message</span><textarea name="message" rows="3" placeholder="A little about the evening…"></textarea></label>
+            <button class="btn btn--solid" type="submit">Send the note <span aria-hidden="true">→</span></button>
+            <p class="label fine">THE FORM OPENS A PREFILLED EMAIL — YOUR MESSAGE IS NEVER STORED ON THIS SITE</p>
+            <p class="label booking-setup" hidden>DIRECT BOOKING ADDRESS NOT YET CONFIGURED — SET <code>VITE_BOOKING_EMAIL</code> IN THE ENVIRONMENT</p>
+            <div class="booking-success" role="status" aria-live="polite">
+              <p class="label label--gold">YOUR NOTE IS READY TO SEND</p>
+              <p class="success-line">Your mail app has opened with the enquiry. If it did not, write to the artist directly and mention the date and venue.</p>
+              <button class="text-btn" type="button">Write another</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="outro" aria-label="Closing">
+        <canvas class="outro-canvas" aria-hidden="true"></canvas>
+        <div class="outro-scrim" aria-hidden="true"></div>
+        <div class="outro-copy">
+          <span class="seal seal--lg">चि</span>
+          <p class="label label--gold">THE NOTE ENDS</p>
+          <h2>The music<br /><em>lingers.</em></h2>
+          <a class="btn" href="#book">Book a performance <span aria-hidden="true">→</span></a>
+        </div>
+        <footer class="footer">
+          <div class="footer-brand">
+            <span class="seal seal--sm">चि</span>
+            <span class="label">CHINMAY GOUD · BANSURI</span>
+          </div>
+          <p class="label">© 2026 · BANSURI, CLASSICAL &amp; LIVE<br />PHOTOGRAPHY · UNSPLASH / PEXELS</p>
+          <a class="label footer-top" href="#top">BACK TO THE TOP ↑</a>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>
