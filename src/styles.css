@@ -1401,8 +1401,8 @@ body:not(.is-ready) .hero-scroll {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(0deg, var(--ink) 4%, rgba(7, 17, 13, 0.15) 48%, rgba(7, 17, 13, 0.55) 100%),
-    radial-gradient(ellipse at 50% 55%, rgba(7, 17, 13, 0) 30%, rgba(7, 17, 13, 0.55) 100%);
+    linear-gradient(0deg, var(--ink) 4%, rgba(7, 17, 13, 0.12) 48%, rgba(7, 17, 13, 0.4) 100%),
+    radial-gradient(ellipse at 50% 55%, rgba(7, 17, 13, 0) 32%, rgba(7, 17, 13, 0.4) 100%);
 }
 .outro-copy {
   position: relative;

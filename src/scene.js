@@ -106,6 +106,12 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   let bursts = [];
   let emitters = [];
   let glyphs = [];
+  let pondShimmer = [];
+  let pondLeaves = [];
+  let ripples = [];
+  let flowers = [];
+  let ferns = [];
+  const pondGeo = { cx: 0, cy: 0, rx: 0, ry: 0 };
   let small = false;
   let fluteIndex = 0;
   let glyphTimer = 0;
@@ -274,21 +280,39 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     motes = [];
     drifters = [];
     emitters = [];
+    pondShimmer = [];
+    pondLeaves = [];
+    ripples = [];
+    flowers = [];
+    ferns = [];
 
     /* ---- Boughs: a high limb left to right, a second from the bottom-left ---- */
-    if (!isOutro) {
-    const spine = [
-      [-0.08 * w, 0.15 * h],
-      [0.3 * w, 0.235 * h],
-      [0.64 * w, 0.1 * h],
-      [1.08 * w, 0.17 * h],
-    ];
-    const lowSpine = [
-      [-0.1 * w, 1.04 * h],
-      [0.14 * w, 0.9 * h],
-      [0.33 * w, 0.855 * h],
-      [0.58 * w, 0.95 * h],
-    ];
+    const spine = isOutro
+      ? [
+          [-0.1 * w, 0.58 * h],
+          [0.28 * w, 0.66 * h],
+          [0.66 * w, 0.58 * h],
+          [1.1 * w, 0.64 * h],
+        ]
+      : [
+          [-0.08 * w, 0.15 * h],
+          [0.3 * w, 0.235 * h],
+          [0.64 * w, 0.1 * h],
+          [1.08 * w, 0.17 * h],
+        ];
+    const lowSpine = isOutro
+      ? [
+          [-0.12 * w, 1.06 * h],
+          [0.1 * w, 1.0 * h],
+          [0.4 * w, 0.985 * h],
+          [0.72 * w, 1.04 * h],
+        ]
+      : [
+          [-0.1 * w, 1.04 * h],
+          [0.14 * w, 0.9 * h],
+          [0.33 * w, 0.855 * h],
+          [0.58 * w, 0.95 * h],
+        ];
 
     const buildLimb = (points, count, baseThick, tipThick, mossClusters, twigs) => {
       for (let index = 0; index < count; index += 1) {
@@ -429,11 +453,26 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       }
     };
 
-    buildLimb(spine, small ? 1900 : 3400, small ? 26 : 36, 11, small ? 16 : 26, small ? 5 : 8);
-    buildLimb(lowSpine, small ? 620 : 1050, small ? 18 : 24, 6, small ? 6 : 10, small ? 1 : 2);
+    const density = isOutro ? 0.55 : 1;
+    buildLimb(
+      spine,
+      Math.round((small ? 1900 : 3400) * density),
+      small ? 26 : 36,
+      11,
+      Math.round((small ? 16 : 26) * density),
+      Math.round((small ? 5 : 8) * density),
+    );
+    buildLimb(
+      lowSpine,
+      Math.round((small ? 620 : 1050) * density),
+      small ? 18 : 24,
+      6,
+      Math.round((small ? 6 : 10) * density),
+      Math.max(1, Math.round((small ? 1 : 2) * density)),
+    );
 
     /* ---- Hanging vines ---- */
-    const vines = small ? 7 : 12;
+    const vines = Math.max(2, Math.round((small ? 7 : 12) * density));
     for (let index = 0; index < vines; index += 1) {
       const t = 0.12 + rand() * 0.86;
       const bx = cubic(spine[0][0], spine[1][0], spine[2][0], spine[3][0], t);
@@ -485,7 +524,6 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
           }
         }
       }
-    }
     }
 
     /* ---- Bansuri: bore, embouchure, bindings, seven finger holes ---- */
@@ -734,6 +772,150 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       }
     }
 
+    /* ---- Pond: still water, shore stones, drifting leaves ---- */
+    pondGeo.cx = w * (isOutro ? 0.6 : 0.35);
+    // The outro carries a footer over its lower edge, so its pond sits higher.
+    pondGeo.cy = h * (isOutro ? 0.835 : 0.918);
+    pondGeo.rx = Math.min(w * (isOutro ? 0.17 : 0.24), small ? 150 : isOutro ? 300 : 340);
+    pondGeo.ry = pondGeo.rx * (small ? 0.24 : 0.17);
+
+    // Shore: irregular stones and dark earth around the waterline.
+    const shoreCount = small ? 70 : 140;
+    for (let index = 0; index < shoreCount; index += 1) {
+      const angle = rand() * TAU;
+      const ring = 1 + gauss(rand) * 0.07;
+      const sx0 = pondGeo.cx + Math.cos(angle) * pondGeo.rx * ring;
+      const sy0 = pondGeo.cy + Math.sin(angle) * pondGeo.ry * ring;
+      const roll = rand();
+      push({
+        x: sx0,
+        y: sy0,
+        sx: (rand() - 0.5) * 10,
+        sy: 6 + rand() * 22,
+        d: 0.1 + rand() * 0.3,
+        a: 0.18 + rand() * 0.26,
+        c: roll < 0.5 ? 5 : roll < 0.8 ? 0 : 6,
+        s: 0.8 + rand() * 1.6,
+        ph: rand() * TAU,
+        sp: 0.6 + rand() * 0.8,
+        wob: 0.5 + rand() * 0.8,
+      });
+    }
+
+    // Water surface: short horizontal shimmer streaks.
+    const shimmerCount = small ? 90 : 190;
+    for (let index = 0; index < shimmerCount; index += 1) {
+      const angle = rand() * TAU;
+      const ring = Math.sqrt(rand()) * 0.92;
+      pondShimmer.push({
+        x: pondGeo.cx + Math.cos(angle) * pondGeo.rx * ring,
+        y: pondGeo.cy + Math.sin(angle) * pondGeo.ry * ring * 0.94,
+        len: 5 + rand() * (small ? 12 : 22),
+        drift: (rand() - 0.5) * 0.5,
+        ph: rand() * TAU,
+        a: 0.18 + rand() * 0.26,
+        c: rand() < 0.45 ? 1 : rand() < 0.78 ? 2 : 4,
+        s: 0.8 + rand() * 1.2,
+      });
+    }
+
+    // Ripples: three slow rings expanding across the surface.
+    for (let index = 0; index < 3; index += 1) {
+      ripples.push({
+        x: pondGeo.cx + (rand() - 0.5) * pondGeo.rx * 1.1,
+        y: pondGeo.cy + (rand() - 0.5) * pondGeo.ry * 0.9,
+        ph: rand() * TAU,
+        dur: 7 + rand() * 5,
+        max: 0.35 + rand() * 0.5,
+      });
+    }
+
+    // Floating leaves, bunched where the bank shelters them.
+    for (let bunch = 0; bunch < 3; bunch += 1) {
+      const bx = pondGeo.cx + (rand() - 0.5) * pondGeo.rx * 0.9;
+      const by = pondGeo.cy + (rand() - 0.5) * pondGeo.ry * 0.6;
+      for (let index = 0; index < (small ? 6 : 10); index += 1) {
+        pondLeaves.push({
+          x: bx + gauss(rand) * 11,
+          y: by + gauss(rand) * 4.5,
+          drift: (rand() - 0.5) * 0.8,
+          ph: rand() * TAU,
+          a: 0.16 + rand() * 0.24,
+          c: rand() < 0.5 ? 1 : 2,
+          s: 0.8 + rand() * 1.1,
+        });
+      }
+    }
+
+    /* ---- Wildflowers: sparse cream blooms among the grass ---- */
+    const flowerCount = isOutro ? (small ? 24 : 40) : (small ? 44 : 84);
+    for (let index = 0; index < flowerCount; index += 1) {
+      const fx = rand() * w;
+      const base = h * (0.952 + rand() * 0.045);
+      const stem = h * (0.018 + rand() * 0.04);
+      const lean = (rand() - 0.5) * 14;
+      const phase = rand() * TAU;
+      const bloom = rand();
+      const petal = bloom < 0.6 ? 4 : bloom < 0.85 ? 3 : 2;
+      for (let step = 0; step < 6; step += 1) {
+        const u = step / 6;
+        flowers.push({
+          x: fx + lean * u * u,
+          y: base - stem * u,
+          sway: 0.4 + u * 1.6,
+          a: 0.2 + rand() * 0.2,
+          c: 5,
+          s: 0.7 + rand() * 0.7,
+          ph: phase + u,
+        });
+      }
+      for (let petalIndex = 0; petalIndex < 6; petalIndex += 1) {
+        const angle = (petalIndex / 6) * TAU + phase;
+        flowers.push({
+          x: fx + lean + Math.cos(angle) * 2.4,
+          y: base - stem + Math.sin(angle) * 2.4,
+          sway: 1.9,
+          a: 0.34 + rand() * 0.3,
+          c: petal,
+          s: 0.8 + rand() * 0.8,
+          ph: phase,
+        });
+      }
+    }
+
+    /* ---- Ferns at the foot of the tree (hero only) ---- */
+    if (!isOutro) {
+      const fernCount = small ? 4 : 7;
+      for (let index = 0; index < fernCount; index += 1) {
+        const fx = w * (0.03 + rand() * 0.2);
+        const fy = h * (0.9 + rand() * 0.05);
+        const length = h * (0.09 + rand() * 0.13);
+        const dir = rand() < 0.5 ? -1 : 1;
+        const lean = dir * (0.5 + rand() * 0.8);
+        const phase = rand() * TAU;
+        const fronds = 26;
+        for (let step = 0; step < fronds; step += 1) {
+          const u = step / fronds;
+          const px = fx + lean * length * u * u;
+          const py = fy - length * u;
+          const leaflets = u < 0.35 ? 2 : u < 0.7 ? 3 : 4;
+          for (let leaf = 0; leaf < leaflets; leaf += 1) {
+            const side = leaf % 2 === 0 ? -1 : 1;
+            const spread = (1 - u * 0.5) * (small ? 3 : 5);
+            ferns.push({
+              x: px + side * spread * (0.4 + leaf * 0.3),
+              y: py - leaf * 0.8,
+              sway: 0.6 + u * 1.4,
+              a: 0.22 + rand() * 0.28,
+              c: rand() < 0.55 ? 1 : 2,
+              s: 0.8 + rand() * 1.1,
+              ph: phase + u * 2,
+            });
+          }
+        }
+      }
+    }
+
     // Bank shadow under the blades.
     const bank = ctx.createLinearGradient(0, h * 0.86, 0, h);
     bank.addColorStop(0, 'rgba(6, 14, 10, 0)');
@@ -741,6 +923,13 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     bank.addColorStop(1, '#030806');
     state.bank = bank;
     state.radius = withFlute ? clamp(Math.hypot(w, h) * 0.012, 8, 15) : 12;
+
+    // Pond water, cached as a gradient in the ellipse's own space.
+    const pondGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, pondGeo.rx);
+    pondGrad.addColorStop(0, 'rgba(34, 74, 56, 0.96)');
+    pondGrad.addColorStop(0.55, 'rgba(20, 50, 39, 0.9)');
+    pondGrad.addColorStop(1, 'rgba(10, 26, 20, 0)');
+    state.pondGrad = pondGrad;
 
     /* ---- Ambient spores ---- */
     const moteCount = small ? 50 : 90;
@@ -921,11 +1110,89 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     }
   }
 
-  function drawGrass(time, progress) {
+  function drawBank() {
     const { w, h } = state;
     ctx.fillStyle = state.bank;
-    ctx.fillRect(0, h * 0.88, w, h * 0.12);
+    ctx.fillRect(0, h * 0.86, w, h * 0.14);
+  }
 
+  // Ground shadow first, then the pond sits in it, then the blades overlap its near shore.
+  function drawPond(time) {
+    const { cx, cy, rx, ry } = pondGeo;
+    if (!rx) return;
+    const ratio = ry / rx;
+
+    // Water body: a cached radial gradient squashed into the ellipse.
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, ratio);
+    ctx.fillStyle = state.pondGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, rx, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+
+    // Shimmer: short streaks sliding on the surface.
+    ctx.save();
+    const boost = isOutro ? 1.4 : 1;
+    for (const s of pondShimmer) {
+      const drift = Math.sin(time * 0.24 + s.ph) * 6 + Math.sin(time * 0.11 + s.ph * 2) * 5;
+      const alpha = s.a * boost * (0.55 + 0.45 * Math.sin(time * 0.6 + s.ph));
+      ctx.fillStyle = SWATCH[s.c][Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)))];
+      ctx.fillRect(s.x + drift, s.y, s.len, s.s);
+    }
+    ctx.restore();
+
+    // Ripples: slow rings widening and fading.
+    ctx.save();
+    ctx.lineWidth = 1;
+    for (const r of ripples) {
+      const t = ((time + r.ph) % r.dur) / r.dur;
+      const rad = Math.max(1, r.max * rx * (0.15 + 0.85 * t));
+      const alpha = (1 - t) * 0.42 * boost;
+      const step = Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)));
+      const halo = Math.min(STEPS, Math.max(0, Math.round(alpha * 0.35 * STEPS)));
+      // A faint outer ring softens the leading edge of each ripple.
+      ctx.strokeStyle = SWATCH[2][halo];
+      ctx.beginPath();
+      ctx.ellipse(r.x, r.y, rad * 1.14, rad * 1.14 * ratio, 0, 0, TAU);
+      ctx.stroke();
+      ctx.strokeStyle = SWATCH[2][step];
+      ctx.beginPath();
+      ctx.ellipse(r.x, r.y, rad, rad * ratio, 0, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Floating leaves.
+    ctx.save();
+    for (const leaf of pondLeaves) {
+      const x = leaf.x + Math.sin(time * 0.18 + leaf.ph) * 9 + Math.cos(time * 0.07 + leaf.ph) * 5;
+      const y = leaf.y + Math.cos(time * 0.22 + leaf.ph) * 1.6;
+      ctx.fillStyle = SWATCH[leaf.c][Math.min(STEPS, Math.max(0, Math.round(leaf.a * STEPS)))];
+      ctx.fillRect(x, y, leaf.s * 1.6, leaf.s);
+    }
+    ctx.restore();
+  }
+
+  function drawUnderstory(time) {
+    ctx.save();
+    for (const f of flowers) {
+      const sway = Math.sin(time * 0.7 + f.ph) * f.sway;
+      const alpha = f.a * (0.85 + 0.15 * Math.sin(time * 1.1 + f.ph));
+      ctx.fillStyle = SWATCH[f.c][Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)))];
+      ctx.fillRect(f.x + sway, f.y, f.s, f.s);
+    }
+    for (const frond of ferns) {
+      const sway = Math.sin(time * 0.5 + frond.ph) * frond.sway;
+      const alpha = frond.a * (0.8 + 0.2 * Math.sin(time * 0.8 + frond.ph));
+      ctx.fillStyle = SWATCH[frond.c][Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)))];
+      ctx.fillRect(frond.x + sway, frond.y, frond.s * 1.5, frond.s);
+    }
+    ctx.restore();
+  }
+
+  function drawGrass(time, progress) {
     for (let index = 0; index < grass.length; index += 1) {
       const p = grass[index];
       let local = 0;
@@ -958,6 +1225,9 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     drawGlow(time, progress, clamp(1 - progress * 1.3, 0, 1));
     drawField(time, progress);
     drawFluteField(time, progress);
+    drawBank();
+    drawPond(time);
+    drawUnderstory(time);
     drawDrifters(time);
     drawBursts(time, progress);
     drawGrass(time, progress);
