@@ -59,8 +59,8 @@ Single long page, seven acts plus intro and outro:
 
 ## Known gaps versus the dossier
 
-1. Pond, wildflowers, ferns, bushes, stones and forest ambience audio are not implemented.
-2. The dossier's five flute states are approximated, not fully separated.
+1. The dossier's five flute states (assembled → loosening → drifting → integrated → reverse) are approximated by one scrubbed morph, not separated into distinct phases.
+2. Forest ambience exists as a user-started, synthesised wind-and-water bed (`src/ambience.js`) that ducks under recordings and reels; there is no audio-reactive visual response yet.
 3. Booking form composes a `mailto:` — there is no server-side submission, validation or spam protection yet. `VITE_BOOKING_EMAIL` is unset, so the form shows its "not configured" note.
 4. Content (biography, qualifications, venues, dates) is placeholder copy pending verified artist material.
 5. Performance work on the target integrated-GPU machine has not been measured.
