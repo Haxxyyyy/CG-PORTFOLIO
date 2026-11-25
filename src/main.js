@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { initIntro } from './intro.js';
 import { initHero, initOutro } from './hero.js';
+import { createAmbience } from './ambience.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -101,6 +102,22 @@ if (rail && railSections.length > 1 && 'IntersectionObserver' in window) {
   railSections.forEach((section) => railObserver.observe(section));
 }
 
+/* Forest ambience: synthesised wind and water, always user-started */
+const ambience = createAmbience();
+const ambienceButton = document.querySelector('.ambience-toggle');
+
+if (ambienceButton) {
+  ambienceButton.addEventListener('click', async () => {
+    const on = await ambience.toggle(0.5);
+    ambienceButton.classList.toggle('is-on', Boolean(on));
+    ambienceButton.setAttribute('aria-pressed', String(Boolean(on)));
+    ambienceButton.setAttribute(
+      'aria-label',
+      on ? 'Stop forest ambience' : 'Play forest ambience',
+    );
+  });
+}
+
 /* Audio gallery */
 const player = new Audio();
 player.preload = 'none';
@@ -190,12 +207,22 @@ player.addEventListener('play', () => {
   if (!active) return;
   active.row.classList.add('is-playing');
   active.button?.setAttribute('aria-pressed', 'true');
+  ambience.duck(true);
 });
 
 player.addEventListener('pause', () => {
+  ambience.duck(false);
   if (!active || player.ended) return;
   active.row.classList.remove('is-playing');
   active.button?.setAttribute('aria-pressed', 'false');
+});
+
+player.addEventListener('ended', () => {
+  ambience.duck(false);
+  if (!active) return;
+  releaseEntry(active);
+  active.time.textContent = formatTime(active.duration || player.duration);
+  active = null;
 });
 
 player.addEventListener('timeupdate', () => {
@@ -205,13 +232,6 @@ player.addEventListener('timeupdate', () => {
   active.seek.value = Math.round(ratio * 1000);
   paintSeek(active, ratio);
   active.time.textContent = `${formatTime(player.currentTime)} / ${formatTime(duration)}`;
-});
-
-player.addEventListener('ended', () => {
-  if (!active) return;
-  releaseEntry(active);
-  active.time.textContent = formatTime(active.duration || player.duration);
-  active = null;
 });
 
 const volume = document.querySelector('.player-volume');
@@ -227,7 +247,9 @@ reels.forEach((video) => {
     reels.forEach((other) => {
       if (other !== video && !other.paused) other.pause();
     });
+    ambience.duck(true);
   });
+  video.addEventListener('pause', () => ambience.duck(false));
 });
 
 /* Booking form */

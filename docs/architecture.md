@@ -91,20 +91,3 @@ To re-measure, serve `dist/` with `npm run preview` and run this in the console:
   gaps.sort((a, b) => a - b);
   console.log({ fps: +(1000 / avg).toFixed(1), ms: +avg.toFixed(2), p95: +gaps[Math.floor(gaps.length * 0.95)].toFixed(1) });
 })();
-```
-
-Caveat: this is headless Chromium on the development machine, not a hardware-GPU baseline across devices. Still unmeasured: real integrated-GPU laptops under battery power, and Safari/Firefox.
-
-## Known gaps versus the dossier
-
-1. The dossier's five flute states (assembled → loosening → drifting → integrated → reverse) are approximated by one scrubbed morph, not separated into distinct phases.
-2. Forest ambience audio (wind, birds, water) is not implemented; there is no audio-reactive visual response.
-3. Booking form composes a `mailto:` — there is no server-side submission, validation or spam protection yet. `VITE_BOOKING_EMAIL` is unset, so the form shows its "not configured" note.
-4. Content (biography, qualifications, venues, dates) is placeholder copy pending verified artist material.
-5. Live performance footage is not available; the film reels are licensed audio over stills.
-
-## Verification
-
-- `npm run build` must pass.
-- Check at 1440×900 and 390×844: intro, hero at progress 0 / mid / full, each act, outro.
-- Verify audio playback, reel playback, form validation states, keyboard focus, and reduced motion.
