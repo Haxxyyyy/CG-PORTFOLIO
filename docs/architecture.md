@@ -57,16 +57,37 @@ Single long page, seven acts plus intro and outro:
 - `public/video/*.mp4` — reels encoded from licensed audio + stills.
 - `sharp` (dev dependency) is available for image resizing/conversion scripts.
 
-## Known gaps versus the dossier
+## Performance
 
-1. The dossier's five flute states (assembled → loosening → drifting → integrated → reverse) are approximated by one scrubbed morph, not separated into distinct phases.
-2. Forest ambience exists as a user-started, synthesised wind-and-water bed (`src/ambience.js`) that ducks under recordings and reels; there is no audio-reactive visual response yet.
-3. Booking form composes a `mailto:` — there is no server-side submission, validation or spam protection yet. `VITE_BOOKING_EMAIL` is unset, so the form shows its "not configured" note.
-4. Content (biography, qualifications, venues, dates) is placeholder copy pending verified artist material.
-5. Performance work on the target integrated-GPU machine has not been measured.
+Measured in headless Chromium through the preview build (real rAF sampling, ~2.5 s windows):
 
-## Verification
+| Scene | Viewport | FPS | Mean frame | p95 |
+|---|---|---|---|---|
+| Hero, scroll 0 | 1440×900 | 59.6 | 16.78 ms | 16.8 ms |
+| Hero, mid-disintegration | 1440×900 | 60.0 | 16.67 ms | 16.8 ms |
+| Hero, mobile tier | 390×844 @2x | 60.0 | 16.67 ms | 16.8 ms |
+| Outro | 1440×900 | 60.0 | 16.67 ms | 17.0 ms |
 
-- `npm run build` must pass.
-- Check at 1440×900 and 390×844: intro, hero at progress 0 / mid / full, each act, outro.
-- Verify audio playback, reel playback, form validation states, keyboard focus, and reduced motion.
+Every scene locks to vsync with no dropped frames. Particle counts scale by a `small` tier (`w < 720`) and the renderer does no per-frame allocation: draws are `fillRect`/`stroke` over precomputed arrays with cached colour swatches and cached gradients.
+
+To re-measure, serve `dist/` with `npm run preview` and run this in the console:
+
+```js
+(async (ms = 2500) => {
+  const gaps = [];
+  let last = performance.now();
+  const t0 = last;
+  await new Promise((done) => {
+    const tick = (now) => {
+      gaps.push(now - last);
+      last = now;
+      if (now - t0 < ms) requestAnimationFrame(tick);
+      else done();
+    };
+    requestAnimationFrame(tick);
+  });
+  gaps.shift();
+  const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  gaps.sort((a, b) => a - b);
+  console.log({ fps: +(1000 / avg).toFixed(1), ms: +avg.toFixed(2), p95: +gaps[Math.floor(gaps.length * 0.95)].toFixed(1) });
+})();

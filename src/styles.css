@@ -219,6 +219,26 @@ h2 em {
   height: 100%;
 }
 
+/* Static feather for reduced-motion visitors: no canvas animation, still the image. */
+.intro-feather {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-canvas {
+    display: none;
+  }
+  .intro-feather {
+    display: block;
+    position: absolute;
+    right: 4%;
+    top: 50%;
+    width: clamp(220px, 30vw, 440px);
+    transform: translateY(-50%);
+    opacity: 0.85;
+    pointer-events: none;
+  }
+}
+
 .intro-frame {
   position: relative;
   z-index: 2;
@@ -1401,8 +1421,8 @@ body:not(.is-ready) .hero-scroll {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(0deg, var(--ink) 4%, rgba(7, 17, 13, 0.15) 48%, rgba(7, 17, 13, 0.55) 100%),
-    radial-gradient(ellipse at 50% 55%, rgba(7, 17, 13, 0) 30%, rgba(7, 17, 13, 0.55) 100%);
+    linear-gradient(0deg, var(--ink) 4%, rgba(7, 17, 13, 0.12) 48%, rgba(7, 17, 13, 0.4) 100%),
+    radial-gradient(ellipse at 50% 55%, rgba(7, 17, 13, 0) 32%, rgba(7, 17, 13, 0.4) 100%);
 }
 .outro-copy {
   position: relative;
