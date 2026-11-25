@@ -46,6 +46,17 @@ const SWATCH = PALETTE.map((base) =>
 
 const GLYPH_CHARS = ['\u266A', '\u266B', '\u266C', '\u2669'];
 
+// Scroll-progress windows for the dossier's five flute states (§4.2). Reverse
+// scrolling replays the same interpolation backwards, so there is no reset.
+const PHASES = {
+  assembled: 0.16,
+  loosening: 0.36,
+  drifting: 0.64,
+  integrated: 0.92,
+};
+const phaseWindow = (progress, from, to) =>
+  smoothstep(to <= from ? (progress >= to ? 1 : 0) : (progress - from) / (to - from));
+
 function makeGlyph(char, rand) {
   const size = 128;
   const canvas = document.createElement('canvas');
@@ -115,6 +126,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   let small = false;
   let fluteIndex = 0;
   let glyphTimer = 0;
+  let fluteNormal = { x: 0, y: -1 };
 
   const halton = (index, base) => {
     let fraction = 1;
@@ -223,8 +235,12 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       p.c1y = p.y + dy * 0.3 + py * bend;
       p.c2x = p.x + dx * 0.72 + px * bend * 0.45;
       p.c2y = p.y + dy * 0.72 + py * bend * 0.45;
-      p.md = 0.3 + (1 - p.ft) * 0.3 + rand() * 0.12;
-      p.mv = 0.34 + rand() * 0.16;
+      p.md = 0.32 + (1 - p.ft) * 0.14 + rand() * 0.06;
+      p.mv = 0.2 + rand() * 0.08;
+      p.lo = (small ? 6 : 10) + rand() * (small ? 14 : 26);
+      p.lp = rand() * TAU;
+      p.tb = 0.5 + rand() * 1.5;
+      p.ts = 0.45 + rand() * 1.2;
     }
   }
 
@@ -246,8 +262,8 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
         dx: Math.cos(angle) * distance,
         dy: Math.sin(angle) * distance - rand() * 90,
         lift: 50 + rand() * 160,
-        delay: 0.26 + rand() * 0.34,
-        dur: 0.5 + rand() * 0.3,
+        delay: 0.3 + rand() * 0.16,
+        dur: 0.26 + rand() * 0.12,
         scale: micro ? 16 + rand() * 12 : small ? 24 + rand() * 18 : 38 + rand() * 32,
         rot: (rand() - 0.5) * 0.9,
         spin: (rand() - 0.5) * 0.9,
@@ -536,6 +552,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       const angle = Math.atan2(y1 - y0, x1 - x0);
       const nx = -Math.sin(angle);
       const ny = Math.cos(angle);
+      fluteNormal = { x: nx, y: ny };
       const radius = clamp(length * 0.024, 9, 19);
 
       const pointAt = (t, off = 0) => ({
@@ -1015,27 +1032,49 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     }
   }
 
+  // Five states from the dossier (§4.2): assembled, loosening, drifting,
+  // integrated, and — because every value is a pure function of scroll
+  // progress — a continuous reverse when the visitor scrolls back up.
   function drawFluteField(time, progress) {
     if (!fluteField.length) return;
-    const fade = 1 - smoothstep(clamp((progress - 0.78) / 0.22, 0, 1));
-    if (fade <= 0.01) return;
+    const loosen = phaseWindow(progress, PHASES.assembled, PHASES.loosening);
+    const blend = 1 - phaseWindow(progress, 0.72, PHASES.integrated);
+    if (blend <= 0.01) return;
 
     for (let index = 0; index < fluteField.length; index += 1) {
       const p = fluteField[index];
-      const local = progress > p.md ? smoothstep(clamp((progress - p.md) / p.mv, 0, 1)) : 0;
-      const settle = 1 - local * 0.82;
-      const wob = Math.sin(time * p.sp + p.ph) * p.wob * settle;
-      const wobY = Math.cos(time * p.sp * 0.85 + p.ph) * p.wob * 0.7 * settle;
-      const x = (local > 0 ? cubic(p.x, p.c1x, p.c2x, p.tx, local) : p.x) + wob;
-      const y = (local > 0 ? cubic(p.y, p.c1y, p.c2y, p.ty, local) : p.y) + wobY;
 
+      // Assembled → loosening: each particle peels off the barrel along the
+      // flute's normal, the foot end leading the head, at its own rate.
+      const peel = clamp((loosen - (1 - p.ft) * 0.3) / 0.7, 0, 1);
+      const lift = p.lo * smoothstep(peel);
+      const driftX = Math.sin(time * 0.5 + p.lp) * lift * 0.5;
+      const driftY = Math.cos(time * 0.42 + p.lp * 1.6) * lift * 0.36 - lift * 0.18;
+
+      // Drifting: bezier flight onto the glyph targets, turbulence swelling
+      // mid-path and dying at both ends so nothing moves in lockstep.
+      const local = progress > p.md ? smoothstep(clamp((progress - p.md) / p.mv, 0, 1)) : 0;
+      const billow = Math.sin(Math.PI * local) * p.tb;
+      const turbulenceX = Math.sin(time * p.ts + p.lp + local * 5.2) * 14 * billow;
+      const turbulenceY = Math.cos(time * p.ts * 0.8 + p.lp * 1.3 + local * 4.1) * 11 * billow;
+
+      const attached = 1 - local;
+      const idleX = Math.sin(time * p.sp + p.ph) * p.wob * attached;
+      const idleY = Math.cos(time * p.sp * 0.85 + p.ph) * p.wob * 0.7 * attached;
+      const baseX = local > 0 ? cubic(p.x, p.c1x, p.c2x, p.tx, local) : p.x;
+      const baseY = local > 0 ? cubic(p.y, p.c1y, p.c2y, p.ty, local) : p.y;
+      const x = baseX + (fluteNormal.x * lift + driftX + idleX) * attached + turbulenceX;
+      const y = baseY + (fluteNormal.y * lift + driftY + idleY) * attached + turbulenceY;
+
+      // Integrated: arrival is quieter than flight — the note settles into the
+      // forest dust rather than ending in a burst.
       const shimmer = 0.82 + 0.18 * Math.sin(time * p.sp * 1.7 + p.ph * 2);
-      const alpha = clamp(p.a * shimmer * fade, 0, 1);
+      const alpha = clamp(p.a * shimmer * blend * (1 - local * 0.25), 0, 1);
       if (alpha < 0.02) continue;
 
       const step = Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)));
       ctx.fillStyle = SWATCH[p.c][step];
-      const size = p.s * (1 + local * 0.35);
+      const size = p.s * (1 + billow * 0.3 - local * 0.15);
       ctx.fillRect(x, y, size, size);
     }
   }
@@ -1222,7 +1261,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     ctx.translate(-w / 2, -h / 2);
 
     drawMotes(time, isOutro ? 1 : 1 - progress * 0.7);
-    drawGlow(time, progress, clamp(1 - progress * 1.3, 0, 1));
+    drawGlow(time, progress, clamp(1 - progress / 0.38, 0, 1));
     drawField(time, progress);
     drawFluteField(time, progress);
     drawBank();

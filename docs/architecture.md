@@ -34,7 +34,7 @@ No Three.js, React, TypeScript, WebGL or GLSL. The dossier recommends them; that
 - **Modes:** `hero` (tree + branch + vines + grass + flute) and `outro` (same environment, no flute, calmer grass).
 - **Layout:** particle positions are computed once per resize from deterministic Halton/random streams into plain arrays (`field`, `fluteField`, `grass`, `motes`, `drifters`, `bursts`).
 - **Palette:** nine cached rgba swatches (`PALETTE`/`SWATCH`) so the frame loop never builds colour strings.
-- **Scroll:** `setProgress` drives (a) the flute's disassociation along bezier paths toward sampled glyph targets, (b) the musical-note burst that lifts off the finger holes, (c) grass/field loosening, (d) a small camera zoom.
+- **Scroll:** `setProgress` runs the dossier's five flute states as pure functions of progress — assembled (0–0.16, idle), loosening (0.16–0.36, per-particle peel along the barrel normal, foot end first), drifting (0.32–0.64, bezier flight with mid-path turbulence), integrated (0.64–0.92, settle and fade into the dust), and reverse (the same curves played backwards when scrolling up). It also drives (a) the musical-note burst that lifts off the finger holes as drifting starts, (b) grass/field loosening, and (c) a small camera zoom.
 - **Motion:** idle sway is time-based, so the scene keeps moving when scrolling stops.
 - **Reduced motion:** `prefers-reduced-motion` renders a single static frame and disables the intro/scroll animation.
 - **No per-frame allocation:** draws are `fillRect` calls over precomputed arrays.
