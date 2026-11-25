@@ -338,12 +338,12 @@
           </div>
           <form class="booking" novalidate data-reveal>
             <div class="field-row">
-              <label class="field"><span>Name</span><input name="name" type="text" autocomplete="name" required /></label>
-              <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+              <label class="field"><span>Name</span><input name="name" type="text" autocomplete="name" maxlength="80" required /></label>
+              <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" maxlength="120" required /></label>
             </div>
             <div class="field-row">
-              <label class="field"><span>Phone / WhatsApp</span><input name="phone" type="tel" autocomplete="tel" /></label>
-              <label class="field"><span>City &amp; venue</span><input name="venue" type="text" autocomplete="off" /></label>
+              <label class="field"><span>Phone / WhatsApp</span><input name="phone" type="tel" autocomplete="tel" maxlength="24" /></label>
+              <label class="field"><span>City &amp; venue</span><input name="venue" type="text" autocomplete="off" maxlength="120" /></label>
             </div>
             <div class="field-row">
               <label class="field">
@@ -359,10 +359,12 @@
               </label>
               <label class="field"><span>Event date</span><input name="date" type="date" /></label>
             </div>
-            <label class="field"><span>Message</span><textarea name="message" rows="3" placeholder="A little about the evening…"></textarea></label>
+            <label class="field"><span>Message</span><textarea name="message" rows="3" maxlength="1500" placeholder="A little about the evening…"></textarea></label>
+            <label class="hp-field" aria-hidden="true"><span>Company</span><input name="company" type="text" tabindex="-1" autocomplete="off" /></label>
             <button class="btn btn--solid" type="submit">Send the note <span aria-hidden="true">→</span></button>
-            <p class="label fine">THE FORM OPENS A PREFILLED EMAIL — YOUR MESSAGE IS NEVER STORED ON THIS SITE</p>
-            <p class="label booking-setup" hidden>DIRECT BOOKING ADDRESS NOT YET CONFIGURED — SET <code>VITE_BOOKING_EMAIL</code> IN THE ENVIRONMENT</p>
+            <p class="label booking-error" role="alert" hidden></p>
+            <p class="label fine booking-note">THE FORM OPENS A PREFILLED EMAIL — YOUR MESSAGE IS NEVER STORED ON THIS SITE</p>
+            <p class="label booking-setup" hidden>DIRECT BOOKING ADDRESS NOT YET CONFIGURED — SET <code>VITE_BOOKING_EMAIL</code> OR <code>VITE_BOOKING_ENDPOINT</code> IN THE ENVIRONMENT</p>
             <div class="booking-success" role="status" aria-live="polite">
               <p class="label label--gold">YOUR NOTE IS READY TO SEND</p>
               <p class="success-line">Your mail app has opened with the enquiry. If it did not, write to the artist directly and mention the date and venue.</p>

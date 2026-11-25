@@ -22,7 +22,7 @@ No Three.js, React, TypeScript, WebGL or GLSL. The dossier recommends them; that
 
 | File | Responsibility |
 |---|---|
-| `src/main.js` | Bootstrap: Lenis + ScrollTrigger, intro handoff, masthead state, anchor scrolling, reveal observer, act rail, audio library, film reels, booking form |
+| `src/main.js` | Bootstrap: Lenis + ScrollTrigger, intro handoff, masthead state, anchor scrolling, reveal observer, act rail, audio library, film reels, booking form (JSON POST to `VITE_BOOKING_ENDPOINT` with honeypot and cooldown, `mailto:` fallback) |
 | `src/intro.js` | Loading overlay: procedural peacock feathers carried left→right on a breeze, progress bar, skip |
 | `src/hero.js` | `initHero` (ScrollTrigger pin over `+=135%`, scrubbed progress, copy fade) and `initOutro` |
 | `src/scene.js` | `createScene(canvas, {mode})`: procedural particle forest, bansuri, grass, motes, scroll disassociation and note burst |

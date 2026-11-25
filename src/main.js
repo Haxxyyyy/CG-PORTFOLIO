@@ -255,17 +255,68 @@ reels.forEach((video) => {
 /* Booking form */
 const form = document.querySelector('.booking');
 const bookingEmail = import.meta.env.VITE_BOOKING_EMAIL;
+const bookingEndpoint = import.meta.env.VITE_BOOKING_ENDPOINT;
+const MAX_MESSAGE = 1500;
+const RESEND_COOLDOWN = 20_000;
+const formReadyAt = Date.now();
 
 if (form) {
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const errorLine = form.querySelector('.booking-error');
+  const noteLine = form.querySelector('.booking-note');
+  const setupLine = form.querySelector('.booking-setup');
+  const successLine = form.querySelector('.success-line');
+  const trap = form.querySelector('[name="company"]');
+
+  if (bookingEndpoint) {
+    if (noteLine) noteLine.textContent = 'SENT DIRECTLY TO THE ARTIST — NEVER STORED ON THIS SITE';
+    if (successLine) successLine.textContent = 'The enquiry is on its way. The artist replies personally, usually within a day or two.';
+  }
+
+  const showError = (message) => {
+    if (!errorLine) return;
+    errorLine.textContent = message;
+    errorLine.hidden = false;
+  };
+
   const clearError = (event) => {
     event.target.closest('.field')?.classList.remove('is-error');
+    if (errorLine) errorLine.hidden = true;
   };
-  form.querySelectorAll('input, textarea').forEach((field) => {
+  form.querySelectorAll('input, textarea, select').forEach((field) => {
     field.addEventListener('input', clearError);
   });
 
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
+  const readFields = () => {
+    const data = new FormData(form);
+    const value = (key) => String(data.get(key) || '').replace(/\s+/g, ' ').trim();
+    return {
+      name: value('name'),
+      email: value('email'),
+      phone: value('phone'),
+      venue: value('venue'),
+      occasion: value('occasion'),
+      date: value('date'),
+      message: String(data.get('message') || '').trim().slice(0, MAX_MESSAGE),
+    };
+  };
+
+  const mailtoHref = (fields) => {
+    const lines = [
+      `Name: ${fields.name}`,
+      `Email: ${fields.email}`,
+      `Phone / WhatsApp: ${fields.phone || '—'}`,
+      `Occasion: ${fields.occasion}`,
+      `Event date: ${fields.date || 'TBC'}`,
+      `City & venue: ${fields.venue || '—'}`,
+      '',
+      fields.message || '(No message)',
+    ];
+    const subject = `Booking enquiry — ${fields.occasion} — ${fields.date || 'date TBC'}`;
+    return `mailto:${bookingEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+  };
+
+  const validate = () => {
     let valid = true;
     form.querySelectorAll('[required]').forEach((field) => {
       const wrapper = field.closest('.field');
@@ -283,35 +334,86 @@ if (form) {
       phone.closest('.field')?.classList.toggle('is-error', !ok);
       if (!ok) valid = false;
     }
-    if (!valid) return;
+    return valid;
+  };
 
-    const setup = form.querySelector('.booking-setup');
-    if (!bookingEmail) {
-      if (setup) setup.hidden = false;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (form.classList.contains('is-sending') || form.classList.contains('is-sent')) return;
+
+    // Honeypot and time trap: a human cannot fill the form this fast, and the
+    // hidden field is never rendered to a real visitor.
+    if (trap?.value.trim()) return;
+    if (Date.now() - formReadyAt < 1500) {
+      showError('Please take a moment and try again.');
       return;
     }
-    if (setup) setup.hidden = true;
 
-    const data = new FormData(form);
-    const lines = [
-      `Name: ${data.get('name') || ''}`,
-      `Email: ${data.get('email') || ''}`,
-      `Phone / WhatsApp: ${data.get('phone') || '—'}`,
-      `Occasion: ${data.get('occasion') || ''}`,
-      `Event date: ${data.get('date') || 'TBC'}`,
-      `City & venue: ${data.get('venue') || '—'}`,
-      '',
-      String(data.get('message') || '').trim() || '(No message)',
-    ];
-    const subject = `Booking enquiry — ${data.get('occasion')} — ${data.get('date') || 'date TBC'}`;
-    const href = `mailto:${bookingEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
-    window.location.href = href;
-    form.classList.add('is-sent');
+    if (!validate()) return;
+
+    if (!bookingEndpoint && !bookingEmail) {
+      if (setupLine) setupLine.hidden = false;
+      return;
+    }
+    if (setupLine) setupLine.hidden = true;
+
+    const fields = readFields();
+
+    if (!bookingEndpoint) {
+      window.location.href = mailtoHref(fields);
+      form.classList.add('is-sent');
+      return;
+    }
+
+    const cooldownKey = 'cg-booking-sent';
+    try {
+      const last = Number(localStorage.getItem(cooldownKey) || 0);
+      if (last && Date.now() - last < RESEND_COOLDOWN) {
+        showError('That note was just sent — give it a moment before writing again.');
+        return;
+      }
+    } catch {
+      /* storage unavailable: skip the client-side cooldown */
+    }
+
+    form.classList.add('is-sending');
+    submitBtn?.setAttribute('aria-busy', 'true');
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      const response = await fetch(bookingEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ ...fields, submittedAt: new Date().toISOString() }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      try {
+        localStorage.setItem(cooldownKey, String(Date.now()));
+      } catch {
+        /* storage unavailable: fine */
+      }
+      form.classList.add('is-sent');
+    } catch {
+      showError(
+        bookingEmail
+          ? 'The note could not be sent. Please write to the artist directly instead.'
+          : 'The note could not be sent. Check the connection and try again.',
+      );
+    } finally {
+      form.classList.remove('is-sending');
+      submitBtn?.removeAttribute('aria-busy');
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 
   form.querySelector('.text-btn')?.addEventListener('click', () => {
     form.classList.remove('is-sent');
     form.reset();
+    try {
+      localStorage.removeItem('cg-booking-sent');
+    } catch {
+      /* storage unavailable: fine */
+    }
     form.querySelector('input')?.focus();
   });
 }
