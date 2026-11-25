@@ -6,12 +6,12 @@ gsap.registerPlugin(ScrollTrigger);
 
 const SCROLL_LENGTH = '+=135%';
 
-export function initHero(reduced) {
+export function initHero(reduced, audio) {
   const stage = document.querySelector('.hero-stage');
   const canvas = stage?.querySelector('.hero-canvas');
   if (!stage || !canvas) return;
 
-  const scene = createScene(canvas, { reduced, mode: 'hero' });
+  const scene = createScene(canvas, { reduced, mode: 'hero', audio });
   if (import.meta.env.DEV) (window.__scenes ||= {}).hero = scene;
   if (!scene || reduced) return;
 
@@ -48,9 +48,9 @@ export function initHero(reduced) {
   });
 }
 
-export function initOutro(reduced) {
+export function initOutro(reduced, audio) {
   const canvas = document.querySelector('.outro-canvas');
   if (!canvas) return;
-  const scene = createScene(canvas, { reduced, mode: 'outro' });
+  const scene = createScene(canvas, { reduced, mode: 'outro', audio });
   if (import.meta.env.DEV) (window.__scenes ||= {}).outro = scene;
 }

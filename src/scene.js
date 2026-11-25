@@ -90,7 +90,7 @@ function makeGlyph(char, rand) {
   return thinned;
 }
 
-export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
+export function createScene(canvas, { reduced = false, mode = 'hero', audio = null } = {}) {
   const ctx = canvas?.getContext('2d');
   const host = canvas?.parentElement;
   if (!ctx || !host) return null;
@@ -104,6 +104,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     dpr: 1,
     progress: 0,
     time: 0,
+    audio: 0,
     running: false,
     visible: true,
     frame: 0,
@@ -995,14 +996,22 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
 
   function drawMotes(time, alpha) {
     if (alpha <= 0.01) return;
+    const energy = state.audio;
     ctx.save();
     ctx.globalAlpha = alpha;
     for (const mote of motes) {
-      const x = (mote.x + time * mote.drift + Math.sin(time * 0.3 + mote.ph) * 14) % (state.w + 40) - 20;
-      const y = mote.y + Math.cos(time * mote.sp + mote.ph) * 12;
+      const x =
+        (mote.x +
+          time * mote.drift +
+          Math.sin(time * 0.3 + mote.ph) * 14 +
+          Math.sin(time * 1.3 + mote.ph * 2) * 26 * energy) %
+          (state.w + 40) -
+        20;
+      const y = mote.y + Math.cos(time * mote.sp + mote.ph) * (12 + energy * 7);
       const a = mote.a * (0.6 + 0.4 * Math.sin(time * mote.sp * 2 + mote.ph));
       ctx.fillStyle = SWATCH[3][Math.min(STEPS, Math.round(a * STEPS))];
-      ctx.fillRect(x, y, mote.s, mote.s);
+      const s = mote.s * (1 + energy * 0.35);
+      ctx.fillRect(x, y, s, s);
     }
     ctx.restore();
   }
@@ -1016,7 +1025,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
       let local = 0;
       if (progress > p.d) local = smoothstep(clamp((progress - p.d) / 0.42, 0, 1));
 
-      const wob = Math.sin(time * p.sp + p.ph) * p.wob * (1 + local * 2.4);
+      const wob = Math.sin(time * p.sp + p.ph) * p.wob * (1 + local * 2.4) * (1 + state.audio * 0.4);
       const x = p.x + p.sx * local + wob + Math.sin(p.y * swirl + time * 0.4) * local * 10;
       const y = p.y + p.sy * local + Math.cos(time * p.sp * 0.9 + p.ph) * p.wob * 0.7;
       if (x < -40 || x > w + 40 || y < -40 || y > h + 40) continue;
@@ -1081,14 +1090,18 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
 
   function drawGlow(time, progress, alpha) {
     if (!withFlute || alpha <= 0.01) return;
+    const energy = state.audio;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (let index = 0; index < emitters.length; index += 1) {
       const hole = emitters[index];
       const pulse = 0.5 + Math.sin(time * 1.3 + index * 0.9) * 0.5;
-      const r = state.radius * (2.6 + pulse * 2.2);
+      const r = state.radius * (2.6 + pulse * 2.2) * (1 + energy * 0.35);
       const glow = ctx.createRadialGradient(hole.x, hole.y, 0, hole.x, hole.y, r);
-      glow.addColorStop(0, `rgba(240, 213, 158, ${0.1 * alpha * (0.35 + pulse * 0.65)})`);
+      glow.addColorStop(
+        0,
+        `rgba(240, 213, 158, ${0.1 * alpha * (0.35 + pulse * 0.65) * (1 + energy * 0.8)})`,
+      );
       glow.addColorStop(1, 'rgba(240, 213, 158, 0)');
       ctx.fillStyle = glow;
       ctx.beginPath();
@@ -1131,7 +1144,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     for (const d of drifters) {
       let y = (d.y - 30 - time * d.rise) % range;
       y = ((y % range) + range) % range + 30;
-      const x = d.x + Math.sin(time * 0.3 + d.ph) * d.sway + Math.sin(time * 0.13 + d.ph * 2) * 12;
+      const x = d.x + Math.sin(time * 0.3 + d.ph) * (d.sway + state.audio * 10) + Math.sin(time * 0.13 + d.ph * 2) * 12;
       const alpha = d.alpha * (0.65 + 0.35 * Math.sin(time * 0.4 + d.ph * 2));
       if (alpha < 0.02 || x < -40 || x > w + 40) continue;
       const step = Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)));
@@ -1174,8 +1187,10 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     // Shimmer: short streaks sliding on the surface.
     ctx.save();
     const boost = isOutro ? 1.4 : 1;
+    const energy = state.audio;
     for (const s of pondShimmer) {
-      const drift = Math.sin(time * 0.24 + s.ph) * 6 + Math.sin(time * 0.11 + s.ph * 2) * 5;
+      const drift =
+        Math.sin(time * 0.24 + s.ph) * (6 + energy * 9) + Math.sin(time * 0.11 + s.ph * 2) * 5;
       const alpha = s.a * boost * (0.55 + 0.45 * Math.sin(time * 0.6 + s.ph));
       ctx.fillStyle = SWATCH[s.c][Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)))];
       ctx.fillRect(s.x + drift, s.y, s.len, s.s);
@@ -1188,7 +1203,7 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
     for (const r of ripples) {
       const t = ((time + r.ph) % r.dur) / r.dur;
       const rad = Math.max(1, r.max * rx * (0.15 + 0.85 * t));
-      const alpha = (1 - t) * 0.42 * boost;
+      const alpha = (1 - t) * 0.42 * boost * (1 + energy * 0.5);
       const step = Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)));
       const halo = Math.min(STEPS, Math.max(0, Math.round(alpha * 0.35 * STEPS)));
       // A faint outer ring softens the leading edge of each ripple.
@@ -1215,15 +1230,16 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   }
 
   function drawUnderstory(time) {
+    const energy = state.audio;
     ctx.save();
     for (const f of flowers) {
-      const sway = Math.sin(time * 0.7 + f.ph) * f.sway;
+      const sway = Math.sin(time * 0.7 + f.ph) * f.sway * (1 + energy * 0.5);
       const alpha = f.a * (0.85 + 0.15 * Math.sin(time * 1.1 + f.ph));
       ctx.fillStyle = SWATCH[f.c][Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)))];
       ctx.fillRect(f.x + sway, f.y, f.s, f.s);
     }
     for (const frond of ferns) {
-      const sway = Math.sin(time * 0.5 + frond.ph) * frond.sway;
+      const sway = Math.sin(time * 0.5 + frond.ph) * frond.sway * (1 + energy * 0.5);
       const alpha = frond.a * (0.8 + 0.2 * Math.sin(time * 0.8 + frond.ph));
       ctx.fillStyle = SWATCH[frond.c][Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)))];
       ctx.fillRect(frond.x + sway, frond.y, frond.s * 1.5, frond.s);
@@ -1232,11 +1248,12 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
   }
 
   function drawGrass(time, progress) {
+    const energy = state.audio;
     for (let index = 0; index < grass.length; index += 1) {
       const p = grass[index];
       let local = 0;
       if (progress > p.d) local = smoothstep(clamp((progress - p.d) / 0.4, 0, 1));
-      const sway = Math.sin(time * 0.8 + p.ph) * p.wob * (1 + local * 2);
+      const sway = Math.sin(time * 0.8 + p.ph) * p.wob * (1 + local * 2) * (1 + energy * 0.45);
       const alpha = clamp(p.a * (0.8 + 0.2 * Math.sin(time * p.sp + p.ph)) * (1 - local), 0, 1);
       if (alpha < 0.02) continue;
       const step = Math.min(STEPS, Math.max(0, Math.round(alpha * STEPS)));
@@ -1252,6 +1269,8 @@ export function createScene(canvas, { reduced = false, mode = 'hero' } = {}) {
 
   function draw(time) {
     const { w, h, progress } = state;
+    // One loudness sample per frame; every layer below reads it from state.
+    state.audio = audio ? clamp(Number(audio()) || 0, 0, 1) : 0;
     ctx.clearRect(0, 0, w, h);
 
     const zoom = 1 + progress * 0.05;

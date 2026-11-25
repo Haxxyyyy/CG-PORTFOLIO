@@ -1,8 +1,11 @@
 // Forest ambience, synthesised from filtered noise — no audio files, no licences.
 // Everything is built on first user gesture and never starts on its own.
 
+import { createAudioTap } from './audio-level.js';
+
 let ctx = null;
 let master = null;
+let tap = null;
 let voices = [];
 let playing = false;
 let duckTarget = 0.5;
@@ -28,7 +31,9 @@ function buildGraph() {
 
   master = ctx.createGain();
   master.gain.value = 0;
-  master.connect(ctx.destination);
+  tap = createAudioTap(ctx);
+  master.connect(tap.node);
+  tap.node.connect(ctx.destination);
 
   const noise = makeNoiseBuffer(ctx);
 
@@ -99,6 +104,7 @@ function teardown() {
     }
   });
   voices = [];
+  tap = null;
   if (ctx) {
     ctx.close().catch(() => {});
     ctx = null;
@@ -132,6 +138,11 @@ export function createAmbience() {
       master.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
       playing = false;
       window.setTimeout(teardown, 900);
+    },
+    // Smoothed 0–1 loudness for the scenes; silent until the bed is running.
+    level() {
+      if (!ctx || !playing || !tap) return 0;
+      return tap.sample();
     },
     // Lower the bed while a recording plays, restore it afterwards.
     duck(on) {
