@@ -1292,6 +1292,23 @@ body:not(.is-ready) .hero-scroll {
   pointer-events: none;
 }
 
+/* Honeypot: present in the DOM for naive bots, invisible to visitors. */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.booking-error {
+  color: #d98a6a;
+  line-height: 1.7;
+}
+.booking .btn[aria-busy='true'] {
+  opacity: 0.55;
+  cursor: progress;
+}
+
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
