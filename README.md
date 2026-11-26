@@ -46,6 +46,7 @@ docs/               dossier, architecture
 - Biography, training, qualifications, venues and dates are **placeholders** until the artist supplies verified material. Do not invent them.
 - Audio and stills in `public/` are openly licensed stand-ins; licence notes appear in the page copy.
 - Reels in `public/video/` are cuts of licensed audio over licensed stills, not the artist's own performance footage.
+- [`docs/artist-brief.md`](docs/artist-brief.md) lists every placeholder claim, where it appears, and the format specs for the real material.
 
 ## Contributing
 
