@@ -23,9 +23,10 @@ No Three.js, React, TypeScript, WebGL or GLSL. The dossier recommends them; that
 | File | Responsibility |
 |---|---|
 | `src/main.js` | Bootstrap: Lenis + ScrollTrigger, intro handoff, masthead state, anchor scrolling, reveal observer, act rail, audio library, film reels, booking form (JSON POST to `VITE_BOOKING_ENDPOINT` with honeypot and cooldown, `mailto:` fallback) |
+| `src/audio-level.js` | Analyser tap that turns the ambience and music output into one smoothed 0–1 energy value |
 | `src/intro.js` | Loading overlay: procedural peacock feathers carried left→right on a breeze, progress bar, skip |
 | `src/hero.js` | `initHero` (ScrollTrigger pin over `+=135%`, scrubbed progress, copy fade) and `initOutro` |
-| `src/scene.js` | `createScene(canvas, {mode})`: procedural particle forest, bansuri, grass, motes, scroll disassociation and note burst |
+| `src/scene.js` | `createScene(canvas, {mode, audio})`: procedural particle forest, bansuri, grass, motes, scroll disassociation, note burst and audio-reactive sway |
 
 ## Scene model
 
@@ -36,6 +37,7 @@ No Three.js, React, TypeScript, WebGL or GLSL. The dossier recommends them; that
 - **Palette:** nine cached rgba swatches (`PALETTE`/`SWATCH`) so the frame loop never builds colour strings.
 - **Scroll:** `setProgress` runs the dossier's five flute states as pure functions of progress — assembled (0–0.16, idle), loosening (0.16–0.36, per-particle peel along the barrel normal, foot end first), drifting (0.32–0.64, bezier flight with mid-path turbulence), integrated (0.64–0.92, settle and fade into the dust), and reverse (the same curves played backwards when scrolling up). It also drives (a) the musical-note burst that lifts off the finger holes as drifting starts, (b) grass/field loosening, and (c) a small camera zoom.
 - **Motion:** idle sway is time-based, so the scene keeps moving when scrolling stops.
+- **Audio:** ambience and music are each tapped by an `AnalyserNode` (`src/audio-level.js`); the loudest low-band level, smoothed with a fast attack and slow release, scales grass/flower sway, mote drift, pond shimmer, understory and the flute glow. Silent or reduced-motion pages read zero and look exactly as before.
 - **Reduced motion:** `prefers-reduced-motion` renders a single static frame and disables the intro/scroll animation.
 - **No per-frame allocation:** draws are `fillRect` calls over precomputed arrays.
 

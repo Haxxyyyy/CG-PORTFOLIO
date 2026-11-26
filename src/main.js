@@ -5,10 +5,24 @@ import Lenis from 'lenis';
 import { initIntro } from './intro.js';
 import { initHero, initOutro } from './hero.js';
 import { createAmbience } from './ambience.js';
+import { createAudioTap } from './audio-level.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Forest ambience: synthesised wind and water, always user-started */
+const ambience = createAmbience();
+const player = new Audio();
+player.preload = 'none';
+player.volume = 0.72;
+
+let musicTap = null;
+// A paused element leaves the analyser's last frame in place, so music energy
+// only counts while the gallery is actually playing.
+const energy = () =>
+  Math.max(ambience.level(), musicTap && !player.paused ? musicTap.sample() : 0);
+if (import.meta.env.DEV) window.__energy = energy;
 
 let lenis = null;
 if (!reduced) {
@@ -20,8 +34,8 @@ if (!reduced) {
   if (import.meta.env.DEV) window.__lenis = lenis;
 }
 
-initHero(reduced);
-initOutro(reduced);
+initHero(reduced, energy);
+initOutro(reduced, energy);
 
 initIntro({
   reduced,
@@ -102,8 +116,7 @@ if (rail && railSections.length > 1 && 'IntersectionObserver' in window) {
   railSections.forEach((section) => railObserver.observe(section));
 }
 
-/* Forest ambience: synthesised wind and water, always user-started */
-const ambience = createAmbience();
+/* Forest ambience controls; the audio object itself is created at the top. */
 const ambienceButton = document.querySelector('.ambience-toggle');
 
 if (ambienceButton) {
@@ -119,9 +132,20 @@ if (ambienceButton) {
 }
 
 /* Audio gallery */
-const player = new Audio();
-player.preload = 'none';
-player.volume = 0.72;
+// Music feeds the same energy value as the ambience. An element can only be
+// routed into Web Audio once, so this happens on the first play, never on load.
+const tapMusic = () => {
+  if (musicTap) return;
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) return;
+  const context = new AudioContextCtor();
+  const tap = createAudioTap(context);
+  context.createMediaElementSource(player).connect(tap.node);
+  tap.node.connect(context.destination);
+  context.resume().catch(() => {});
+  musicTap = tap;
+  if (import.meta.env.DEV) window.__music = { tap, context, player };
+};
 
 const formatTime = (seconds) => {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -169,6 +193,7 @@ function releaseEntry(entry) {
 }
 
 function selectTrack(entry) {
+  tapMusic();
   if (active === entry) {
     if (player.paused) player.play();
     else player.pause();
